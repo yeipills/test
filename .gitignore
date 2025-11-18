@@ -44,3 +44,7 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Development
+.dev-pids/
+backups/

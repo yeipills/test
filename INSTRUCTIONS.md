@@ -2,6 +2,42 @@
 
 ## 🚀 Quick Start (Docker - Recomendado)
 
+### Método 1: Scripts Automáticos (Más Fácil)
+
+**Linux/Mac:**
+```bash
+# 1. Clonar el repositorio
+git clone <repo-url>
+cd liquiverde
+
+# 2. Iniciar aplicación
+./start.sh
+
+# 3. Detener aplicación
+./stop.sh
+
+# 4. Reiniciar aplicación
+./restart.sh
+
+# 5. Ver logs en tiempo real
+./logs.sh
+```
+
+**Windows:**
+```cmd
+# 1. Clonar el repositorio
+git clone <repo-url>
+cd liquiverde
+
+# 2. Iniciar aplicación
+start.bat
+
+# 3. Detener aplicación
+stop.bat
+```
+
+### Método 2: Docker Compose Manual
+
 ```bash
 # 1. Clonar el repositorio
 git clone <repo-url>
@@ -15,13 +51,52 @@ docker-compose up --build
 # Backend API Docs: http://localhost:8000/docs
 ```
 
+### Método 3: Makefile (Para usuarios avanzados)
+
+```bash
+# Ver todos los comandos disponibles
+make help
+
+# Iniciar
+make start
+
+# Detener
+make stop
+
+# Ver logs
+make logs
+
+# Limpiar todo
+make clean
+```
+
 ¡Eso es todo! La aplicación completa estará corriendo.
 
 ---
 
 ## 🛠 Ejecución Local (Desarrollo)
 
-### Terminal 1 - Backend
+### Método 1: Script Automático (Recomendado)
+
+```bash
+# Inicia backend y frontend automáticamente
+./start-dev.sh
+
+# Presiona Ctrl+C para detener todo
+
+# O detener manualmente:
+./stop-dev.sh
+```
+
+**Con Make:**
+```bash
+make dev        # Iniciar
+make dev-stop   # Detener
+```
+
+### Método 2: Manual (Dos Terminales)
+
+**Terminal 1 - Backend:**
 
 ```bash
 cd backend
@@ -33,7 +108,7 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Backend disponible en: http://localhost:8000
 
-### Terminal 2 - Frontend
+**Terminal 2 - Frontend:**
 
 ```bash
 cd frontend
@@ -125,7 +200,11 @@ npm cache clean --force
 
 ### Docker issues
 ```bash
-# Limpiar todo
+# Opción 1: Usar Makefile
+make clean
+make start
+
+# Opción 2: Manual
 docker-compose down -v
 docker system prune -a
 
@@ -141,6 +220,52 @@ docker-compose up --build --force-recreate
 - **README completo:** README.md
 - **Algoritmos:** Ver carpeta `backend/app/algorithms/`
 - **Dataset:** `data/products_dataset.json`
+
+---
+
+## 📜 Scripts Disponibles
+
+### Scripts Docker (Linux/Mac)
+
+| Script | Descripción |
+|--------|-------------|
+| `./start.sh` | Inicia toda la aplicación con Docker |
+| `./stop.sh` | Detiene todos los servicios |
+| `./restart.sh` | Reinicia la aplicación completa |
+| `./logs.sh` | Muestra logs en tiempo real |
+
+### Scripts Docker (Windows)
+
+| Script | Descripción |
+|--------|-------------|
+| `start.bat` | Inicia toda la aplicación con Docker |
+| `stop.bat` | Detiene todos los servicios |
+
+### Scripts Desarrollo (Linux/Mac)
+
+| Script | Descripción |
+|--------|-------------|
+| `./start-dev.sh` | Inicia backend y frontend en modo dev |
+| `./stop-dev.sh` | Detiene servicios de desarrollo |
+
+### Comandos Make
+
+| Comando | Descripción |
+|---------|-------------|
+| `make help` | Muestra todos los comandos disponibles |
+| `make start` | Inicia con Docker |
+| `make stop` | Detiene servicios Docker |
+| `make restart` | Reinicia servicios |
+| `make logs` | Ver logs de todos los servicios |
+| `make logs-backend` | Ver logs solo del backend |
+| `make logs-frontend` | Ver logs solo del frontend |
+| `make status` | Ver estado de los servicios |
+| `make build` | Reconstruir imágenes Docker |
+| `make clean` | Limpiar todo (contenedores, volúmenes, imágenes) |
+| `make dev` | Iniciar en modo desarrollo |
+| `make dev-stop` | Detener modo desarrollo |
+| `make health` | Verificar salud de los servicios |
+| `make test-api` | Prueba rápida del API |
 
 ---
 

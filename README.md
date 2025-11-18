@@ -314,36 +314,101 @@ liquiverde/
 
 ## 🚀 Instalación y Ejecución
 
-### Opción 1: Docker Compose (Recomendada)
+### Opción 1: Docker Compose con Scripts (Recomendada - Más Fácil)
 
 **Requisitos:**
 - Docker 20.10+
 - Docker Compose 2.0+
 
-**Pasos:**
-
+**Linux/Mac:**
 ```bash
 # 1. Clonar repositorio
 git clone <repo-url>
 cd liquiverde
 
-# 2. Construir y levantar servicios
-docker-compose up --build
+# 2. Iniciar aplicación (construye e inicia todo automáticamente)
+./start.sh
 
 # 3. Acceder a la aplicación
 # Frontend: http://localhost
 # Backend API: http://localhost:8000
 # API Docs: http://localhost:8000/docs
+
+# Ver logs en tiempo real
+./logs.sh
+
+# Detener aplicación
+./stop.sh
+
+# Reiniciar aplicación
+./restart.sh
 ```
 
-**Detener servicios:**
+**Windows:**
+```cmd
+# 1. Clonar repositorio
+git clone <repo-url>
+cd liquiverde
+
+# 2. Iniciar aplicación
+start.bat
+
+# 3. Detener aplicación
+stop.bat
+```
+
+**Con Makefile:**
 ```bash
+# Ver todos los comandos disponibles
+make help
+
+# Iniciar
+make start
+
+# Ver logs
+make logs
+
+# Detener
+make stop
+
+# Limpiar todo
+make clean
+```
+
+---
+
+### Opción 2: Docker Compose Manual
+
+```bash
+# Clonar repositorio
+git clone <repo-url>
+cd liquiverde
+
+# Construir y levantar servicios
+docker-compose up --build
+
+# Detener servicios
 docker-compose down
 ```
 
 ---
 
-### Opción 2: Ejecución Local (Desarrollo)
+### Opción 3: Ejecución Local (Desarrollo)
+
+**Con Script Automático (Linux/Mac):**
+```bash
+# Inicia backend y frontend automáticamente
+./start-dev.sh
+
+# Presiona Ctrl+C para detener, o:
+./stop-dev.sh
+
+# Con Makefile
+make dev        # Iniciar
+make dev-stop   # Detener
+```
+
+**Manual (Dos Terminales):**
 
 #### Backend
 
