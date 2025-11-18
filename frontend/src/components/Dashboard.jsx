@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { recommendationsAPI, statsAPI } from '../services/api';
-import { TrendingUp, Leaf, Award, DollarSign, ShoppingBag } from 'lucide-react';
+import { TrendingUp, Leaf, Award, DollarSign, ShoppingBag, ArrowRight, Zap } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -58,91 +58,265 @@ export default function Dashboard() {
     );
   }
 
+  const totalSavings = savingsOps.reduce((sum, op) => sum + op.savings, 0);
+
   return (
     <div>
-      <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '1.5rem' }}>
+      <h1 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: '1rem' }}>
         Dashboard de Sostenibilidad
       </h1>
 
-      {/* Stats Overview */}
+      {/* Stats Overview - Compact */}
       {stats && (
-        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          <div className="card" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', marginBottom: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <ShoppingBag size={20} />
-              <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Total Productos</div>
+        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem', marginBottom: '1rem' }}>
+          <div className="stat-card" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', padding: '0.875rem', borderRadius: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+              <ShoppingBag size={16} />
+              <div style={{ fontSize: '0.7rem', opacity: 0.9 }}>Productos</div>
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{stats.total_products}</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>{stats.total_products}</div>
           </div>
 
-          <div className="card" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', marginBottom: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <Award size={20} />
-              <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Categorías</div>
+          <div className="stat-card" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', padding: '0.875rem', borderRadius: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+              <Award size={16} />
+              <div style={{ fontSize: '0.7rem', opacity: 0.9 }}>Categorías</div>
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{stats.categories_count}</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>{stats.categories_count}</div>
           </div>
 
-          <div className="card" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', marginBottom: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <DollarSign size={20} />
-              <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Precio Promedio</div>
+          <div className="stat-card" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', padding: '0.875rem', borderRadius: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+              <DollarSign size={16} />
+              <div style={{ fontSize: '0.7rem', opacity: 0.9 }}>Precio Prom.</div>
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>${stats.average_price.toFixed(0)}</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>${stats.average_price.toFixed(0)}</div>
           </div>
 
-          <div className="card" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', color: 'white', marginBottom: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <Leaf size={20} />
-              <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Productos Locales</div>
+          <div className="stat-card" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', color: 'white', padding: '0.875rem', borderRadius: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+              <Leaf size={16} />
+              <div style={{ fontSize: '0.7rem', opacity: 0.9 }}>Locales</div>
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{stats.labels?.local || 0}</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>{stats.labels?.local || 0}</div>
           </div>
         </div>
       )}
 
-      {/* Charts Section */}
+      {/* PRIORITY: Savings Opportunities - Most Actionable */}
+      {savingsOps.length > 0 && (
+        <div className="card highlight-card" style={{ marginBottom: '1rem', border: '2px solid #10b981', background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: '600', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Zap size={20} style={{ color: '#10b981' }} />
+              Ahorra Ahora
+            </h2>
+            <div style={{ background: '#10b981', color: 'white', padding: '0.5rem 1rem', borderRadius: '2rem', fontWeight: '700', fontSize: '1.1rem' }}>
+              ${totalSavings.toFixed(0)} disponible
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {savingsOps.slice(0, 3).map((opportunity, index) => (
+              <div
+                key={index}
+                className="savings-item"
+                style={{
+                  padding: '0.75rem',
+                  background: 'white',
+                  border: '1px solid #a7f3d0',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.125rem' }}>Cambiar</div>
+                  <div style={{ fontWeight: '500', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {opportunity.expensive_product.name}
+                  </div>
+                </div>
+
+                <ArrowRight size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.125rem' }}>Por</div>
+                  <div style={{ fontWeight: '500', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {opportunity.better_alternative.name}
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontSize: '1rem', fontWeight: '700', color: '#10b981' }}>
+                    -${opportunity.savings.toFixed(0)}
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: '#059669' }}>
+                    {opportunity.savings_percentage.toFixed(0)}%
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {savingsOps.length > 3 && (
+            <div style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.8rem', color: '#059669' }}>
+              +{savingsOps.length - 3} oportunidades más
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Two Column Layout for Lists */}
+      <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+        {/* Top Sustainable - Compact */}
+        <div className="card" style={{ marginBottom: 0 }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Leaf size={18} style={{ color: '#10b981' }} />
+            Top Sostenibles
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {topSustainable.slice(0, 3).map((item, index) => (
+              <div
+                key={item.product.id}
+                className="product-item"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.625rem',
+                  background: index === 0 ? '#f0fdf4' : '#f9fafb',
+                  borderRadius: '0.375rem',
+                  border: index === 0 ? '1px solid #10b981' : '1px solid #e5e7eb',
+                  gap: '0.5rem',
+                  transition: 'transform 0.2s',
+                }}
+              >
+                <div
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: index === 0 ? '#10b981' : '#9ca3af',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: '600',
+                    fontSize: '0.75rem',
+                    flexShrink: 0,
+                  }}
+                >
+                  {index + 1}
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: '500', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {item.product.name}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>
+                    Score: {item.sustainability_score.overall_score.toFixed(0)}
+                  </div>
+                </div>
+
+                <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#10b981', flexShrink: 0 }}>
+                  ${item.product.price}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Best Value - Compact */}
+        <div className="card" style={{ marginBottom: 0 }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <TrendingUp size={18} style={{ color: '#f59e0b' }} />
+            Mejor Valor
+          </h2>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {bestValue.slice(0, 3).map((item, index) => (
+              <div
+                key={item.product.id}
+                className="product-item"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.625rem',
+                  background: '#fffbeb',
+                  borderRadius: '0.375rem',
+                  border: '1px solid #fde68a',
+                  gap: '0.5rem',
+                  transition: 'transform 0.2s',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: '500', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {item.product.name}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>
+                    {item.product.brand || item.product.category}
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#f59e0b' }}>
+                    ${item.product.price}
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: '#92400e' }}>
+                    Val: {item.value_score.toFixed(0)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Charts - Lower Priority */}
       {stats && (
-        <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
           {/* Categories Bar Chart */}
-          <div className="card">
-            <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: '#374151' }}>
-              Productos por Categoria
+          <div className="card" style={{ marginBottom: 0 }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem', color: '#374151' }}>
+              Por Categoría
             </h3>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart
                 data={Object.entries(stats.categories || {}).map(([name, count]) => ({
-                  name: name.charAt(0).toUpperCase() + name.slice(1),
-                  productos: count,
+                  name: name.substring(0, 6),
+                  qty: count,
                 }))}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip />
-                <Bar dataKey="productos" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="qty" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           {/* Labels Pie Chart */}
-          <div className="card">
-            <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: '#374151' }}>
-              Caracteristicas de Productos
+          <div className="card" style={{ marginBottom: 0 }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem', color: '#374151' }}>
+              Características
             </h3>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie
                   data={Object.entries(stats.labels || {}).map(([name, value]) => ({
-                    name: name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' '),
+                    name: name.substring(0, 8),
                     value: value,
                   }))}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
+                  outerRadius={60}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -154,238 +328,8 @@ export default function Dashboard() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-
-          {/* Sustainability Scores Bar Chart */}
-          {topSustainable.length > 0 && (
-            <div className="card" style={{ gridColumn: 'span 2' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: '#374151' }}>
-                Scores de Sostenibilidad - Top Productos
-              </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart
-                  data={topSustainable.map((item) => ({
-                    name: item.product.name.length > 15
-                      ? item.product.name.substring(0, 15) + '...'
-                      : item.product.name,
-                    Economico: item.sustainability_score.economic_score || 0,
-                    Ambiental: item.sustainability_score.environmental_score || 0,
-                    Social: item.sustainability_score.social_score || 0,
-                    Salud: item.sustainability_score.health_score || 0,
-                  }))}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Economico" stackId="a" fill="#3b82f6" />
-                  <Bar dataKey="Ambiental" stackId="a" fill="#10b981" />
-                  <Bar dataKey="Social" stackId="a" fill="#f59e0b" />
-                  <Bar dataKey="Salud" stackId="a" fill="#8b5cf6" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
         </div>
       )}
-
-      {/* Top Sustainable Products */}
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h2 className="card-title">
-          <Leaf size={20} style={{ display: 'inline', marginRight: '0.5rem', color: '#10b981' }} />
-          Top 5 Productos Mas Sostenibles
-        </h2>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {topSustainable.map((item, index) => (
-            <div
-              key={item.product.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '1rem',
-                background: index === 0 ? '#f0fdf4' : '#f9fafb',
-                borderRadius: '0.5rem',
-                border: index === 0 ? '2px solid #10b981' : '1px solid #e5e7eb',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  background: index === 0 ? '#10b981' : '#6b7280',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: '700',
-                  marginRight: '1rem',
-                }}
-              >
-                {index + 1}
-              </div>
-
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: '600', fontSize: '1rem' }}>{item.product.name}</div>
-                {item.product.brand && (
-                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{item.product.brand}</div>
-                )}
-                <div style={{ marginTop: '0.25rem' }}>
-                  <span className="badge badge-success">
-                    Score: {item.sustainability_score.overall_score.toFixed(0)}/100
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#10b981' }}>
-                  ${item.product.price}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{item.product.category}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Best Value Products */}
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h2 className="card-title">
-          <TrendingUp size={20} style={{ display: 'inline', marginRight: '0.5rem', color: '#f59e0b' }} />
-          Mejor Relación Calidad-Precio
-        </h2>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-          {bestValue.map((item) => (
-            <div
-              key={item.product.id}
-              style={{
-                padding: '1rem',
-                background: '#fff7ed',
-                borderRadius: '0.5rem',
-                border: '1px solid #fed7aa',
-              }}
-            >
-              <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '0.25rem' }}>
-                {item.product.name}
-              </div>
-              {item.product.brand && (
-                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.5rem' }}>
-                  {item.product.brand}
-                </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: '1.125rem', fontWeight: '700', color: '#f59e0b' }}>
-                  ${item.product.price}
-                </div>
-                <div className="badge badge-warning">
-                  Value: {item.value_score.toFixed(0)}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Savings Opportunities */}
-      <div className="card">
-        <h2 className="card-title">
-          <DollarSign size={20} style={{ display: 'inline', marginRight: '0.5rem', color: '#10b981' }} />
-          Oportunidades de Ahorro
-        </h2>
-
-        {savingsOps.length > 0 ? (
-          <>
-            <div
-              style={{
-                padding: '1rem',
-                background: '#f0fdf4',
-                borderRadius: '0.5rem',
-                marginBottom: '1rem',
-                border: '1px solid #a7f3d0',
-              }}
-            >
-              <div style={{ fontSize: '0.875rem', color: '#065f46', marginBottom: '0.25rem' }}>
-                Potencial de Ahorro Total
-              </div>
-              <div style={{ fontSize: '2rem', fontWeight: '700', color: '#10b981' }}>
-                ${savingsOps.reduce((sum, op) => sum + op.savings, 0).toFixed(0)}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#047857', marginTop: '0.25rem' }}>
-                En {savingsOps.length} oportunidad(es) identificada(s)
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {savingsOps.slice(0, 5).map((opportunity, index) => (
-                <div
-                  key={index}
-                  style={{
-                    padding: '1rem',
-                    background: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '0.5rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>
-                        En lugar de:
-                      </div>
-                      <div style={{ fontWeight: '600' }}>{opportunity.expensive_product.name}</div>
-                      <div style={{ fontSize: '0.875rem', color: '#ef4444' }}>
-                        ${opportunity.expensive_product.price}
-                      </div>
-                    </div>
-
-                    <div style={{ fontSize: '2rem', color: '#d1d5db', alignSelf: 'center' }}>→</div>
-
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>
-                        Mejor opción:
-                      </div>
-                      <div style={{ fontWeight: '600' }}>{opportunity.better_alternative.name}</div>
-                      <div style={{ fontSize: '0.875rem', color: '#10b981' }}>
-                        ${opportunity.better_alternative.price}
-                      </div>
-                    </div>
-
-                    <div style={{ textAlign: 'right', alignSelf: 'center' }}>
-                      <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#10b981' }}>
-                        -${opportunity.savings.toFixed(0)}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#059669' }}>
-                        ({opportunity.savings_percentage.toFixed(0)}% ahorro)
-                      </div>
-                    </div>
-                  </div>
-
-                  {opportunity.sustainability_improvement > 0 && (
-                    <div
-                      style={{
-                        marginTop: '0.5rem',
-                        padding: '0.5rem',
-                        background: '#f0fdf4',
-                        borderRadius: '0.25rem',
-                        fontSize: '0.75rem',
-                        color: '#065f46',
-                      }}
-                    >
-                      Bonus: +{opportunity.sustainability_improvement.toFixed(0)} puntos de sostenibilidad
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-            No hay oportunidades de ahorro significativas en este momento
-          </div>
-        )}
-      </div>
     </div>
   );
 }

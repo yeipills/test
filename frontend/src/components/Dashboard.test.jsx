@@ -33,10 +33,27 @@ vi.mock('../services/api', () => ({
       },
     }),
     getBestValue: vi.fn().mockResolvedValue({
-      data: { products: [] },
+      data: {
+        products: [
+          {
+            product: { id: '2', name: 'Arroz', brand: 'Test', category: 'grains', price: 1500 },
+            value_score: 88,
+          },
+        ],
+      },
     }),
     getSavingsOpportunities: vi.fn().mockResolvedValue({
-      data: { opportunities: [] },
+      data: {
+        opportunities: [
+          {
+            expensive_product: { id: '3', name: 'Leche Premium', price: 2500 },
+            better_alternative: { id: '4', name: 'Leche Normal', price: 1500 },
+            savings: 1000,
+            savings_percentage: 40,
+            sustainability_improvement: 5,
+          },
+        ],
+      },
     }),
   },
 }));
@@ -58,7 +75,7 @@ describe('Dashboard Component', () => {
   it('displays total products stat', async () => {
     render(<Dashboard />);
     await waitFor(() => {
-      expect(screen.getByText('Total Productos')).toBeInTheDocument();
+      expect(screen.getByText('Productos')).toBeInTheDocument();
       expect(screen.getByText('20')).toBeInTheDocument();
     });
   });
@@ -67,49 +84,52 @@ describe('Dashboard Component', () => {
     render(<Dashboard />);
     await waitFor(() => {
       expect(screen.getByText('Categorías')).toBeInTheDocument();
+      expect(screen.getByText('10')).toBeInTheDocument();
     });
   });
 
   it('displays average price', async () => {
     render(<Dashboard />);
     await waitFor(() => {
-      expect(screen.getByText('Precio Promedio')).toBeInTheDocument();
+      expect(screen.getByText('Precio Prom.')).toBeInTheDocument();
     });
   });
 
   it('displays local products count', async () => {
     render(<Dashboard />);
     await waitFor(() => {
-      expect(screen.getByText('Productos Locales')).toBeInTheDocument();
+      expect(screen.getByText('Locales')).toBeInTheDocument();
+      expect(screen.getByText('8')).toBeInTheDocument();
+    });
+  });
+
+  it('renders savings section with total', async () => {
+    render(<Dashboard />);
+    await waitFor(() => {
+      expect(screen.getByText('Ahorra Ahora')).toBeInTheDocument();
+      expect(screen.getByText('$1000 disponible')).toBeInTheDocument();
     });
   });
 
   it('renders top sustainable products section', async () => {
     render(<Dashboard />);
     await waitFor(() => {
-      expect(screen.getByText(/Top 5 Productos/)).toBeInTheDocument();
+      expect(screen.getByText('Top Sostenibles')).toBeInTheDocument();
     });
   });
 
   it('renders best value section', async () => {
     render(<Dashboard />);
     await waitFor(() => {
-      expect(screen.getByText(/Mejor Relación Calidad-Precio/)).toBeInTheDocument();
-    });
-  });
-
-  it('renders savings opportunities section', async () => {
-    render(<Dashboard />);
-    await waitFor(() => {
-      expect(screen.getByText(/Oportunidades de Ahorro/)).toBeInTheDocument();
+      expect(screen.getByText('Mejor Valor')).toBeInTheDocument();
     });
   });
 
   it('renders charts section', async () => {
     render(<Dashboard />);
     await waitFor(() => {
-      expect(screen.getByText('Productos por Categoria')).toBeInTheDocument();
-      expect(screen.getByText('Caracteristicas de Productos')).toBeInTheDocument();
+      expect(screen.getByText('Por Categoría')).toBeInTheDocument();
+      expect(screen.getByText('Características')).toBeInTheDocument();
     });
   });
 });
