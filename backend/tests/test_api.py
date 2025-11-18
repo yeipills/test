@@ -35,8 +35,11 @@ class TestHealthEndpoints:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "healthy"
+        # Accept both healthy (all components up) and degraded (fallback mode)
+        assert data["status"] in ["healthy", "degraded"]
         assert data["service"] == "liquiverde-api"
+        assert "components" in data
+        assert data["components"]["api"] == "up"
 
 
 class TestStatsEndpoint:

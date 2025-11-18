@@ -6,14 +6,41 @@ FastAPI application con optimización multi-objetivo de compras
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
 import uvicorn
 
 from .routes import products_router, shopping_list_router, recommendations_router
+from .database import init_db
+from .cache import cache_service
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup and shutdown events"""
+    # Startup
+    print("Initializing database tables...")
+    try:
+        init_db()
+        print("Database initialized successfully")
+    except Exception as e:
+        print(f"Database initialization skipped (may not be available): {e}")
+
+    # Check Redis
+    if cache_service.is_available():
+        print("Redis cache connected successfully")
+    else:
+        print("Redis cache not available - running without cache")
+
+    yield
+
+    # Shutdown
+    print("Shutting down LiquiVerde API...")
 
 # Crear aplicación FastAPI
 app = FastAPI(
     title="LiquiVerde Smart Retail API",
     redoc_url=None,  # Disable ReDoc (use /docs Swagger UI instead)
+    lifespan=lifespan,
     description="""
     🌿 Plataforma de retail inteligente para compras sostenibles y económicas
 
@@ -105,8 +132,37 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "service": "liquiverde-api"}
+    """Health check endpoint with service status"""
+    from .database import SessionLocal
+
+    health = {
+        "status": "healthy",
+        "service": "liquiverde-api",
+        "components": {
+            "api": "up",
+            "database": "unknown",
+            "cache": "unknown"
+        }
+    }
+
+    # Check database
+    try:
+        db = SessionLocal()
+        db.execute("SELECT 1")
+        db.close()
+        health["components"]["database"] = "up"
+    except Exception as e:
+        health["components"]["database"] = "down"
+        health["status"] = "degraded"
+
+    # Check Redis
+    if cache_service.is_available():
+        health["components"]["cache"] = "up"
+    else:
+        health["components"]["cache"] = "down"
+        health["status"] = "degraded"
+
+    return health
 
 
 @app.get("/api/stats")
