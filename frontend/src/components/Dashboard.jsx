@@ -1,6 +1,21 @@
 import { useState, useEffect } from 'react';
 import { recommendationsAPI, statsAPI } from '../services/api';
 import { TrendingUp, Leaf, Award, DollarSign, ShoppingBag } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+
+const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -86,11 +101,100 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Charts Section */}
+      {stats && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+          {/* Categories Bar Chart */}
+          <div className="card">
+            <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: '#374151' }}>
+              Productos por Categoria
+            </h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart
+                data={Object.entries(stats.categories || {}).map(([name, count]) => ({
+                  name: name.charAt(0).toUpperCase() + name.slice(1),
+                  productos: count,
+                }))}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="productos" fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Labels Pie Chart */}
+          <div className="card">
+            <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: '#374151' }}>
+              Caracteristicas de Productos
+            </h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={Object.entries(stats.labels || {}).map(([name, value]) => ({
+                    name: name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' '),
+                    value: value,
+                  }))}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {Object.entries(stats.labels || {}).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Sustainability Scores Bar Chart */}
+          {topSustainable.length > 0 && (
+            <div className="card" style={{ gridColumn: 'span 2' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: '#374151' }}>
+                Scores de Sostenibilidad - Top Productos
+              </h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart
+                  data={topSustainable.map((item) => ({
+                    name: item.product.name.length > 15
+                      ? item.product.name.substring(0, 15) + '...'
+                      : item.product.name,
+                    Economico: item.sustainability_score.economic_score || 0,
+                    Ambiental: item.sustainability_score.environmental_score || 0,
+                    Social: item.sustainability_score.social_score || 0,
+                    Salud: item.sustainability_score.health_score || 0,
+                  }))}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="Economico" stackId="a" fill="#3b82f6" />
+                  <Bar dataKey="Ambiental" stackId="a" fill="#10b981" />
+                  <Bar dataKey="Social" stackId="a" fill="#f59e0b" />
+                  <Bar dataKey="Salud" stackId="a" fill="#8b5cf6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Top Sustainable Products */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <h2 className="card-title">
           <Leaf size={20} style={{ display: 'inline', marginRight: '0.5rem', color: '#10b981' }} />
-          Top 5 Productos Más Sostenibles
+          Top 5 Productos Mas Sostenibles
         </h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

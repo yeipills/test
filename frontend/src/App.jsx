@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Leaf, Search, ShoppingCart, BarChart3, TrendingUp } from 'lucide-react';
+import { Leaf, Search, ShoppingCart, BarChart3, TrendingUp, MapPin } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import ProductSearch from './components/ProductSearch';
 import ShoppingListOptimizer from './components/ShoppingListOptimizer';
 import ProductComparator from './components/ProductComparator';
+import StoreMap from './components/StoreMap';
 import './styles/App.css';
 
 function App() {
@@ -19,6 +20,8 @@ function App() {
         return <ShoppingListOptimizer />;
       case 'compare':
         return <ProductComparator />;
+      case 'stores':
+        return <StoreMap />;
       default:
         return <Dashboard />;
     }
@@ -62,6 +65,13 @@ function App() {
             >
               <BarChart3 size={16} />
               Comparar
+            </button>
+            <button
+              className={`nav-btn ${activeTab === 'stores' ? 'active' : ''}`}
+              onClick={() => setActiveTab('stores')}
+            >
+              <MapPin size={16} />
+              Tiendas
             </button>
           </nav>
         </div>
