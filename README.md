@@ -452,7 +452,6 @@ npm run dev
 
 Una vez ejecutando el backend:
 - **Swagger UI:** http://localhost:8000/docs
-- **ReDoc:** http://localhost:8000/redoc
 
 ### Endpoints Principales
 
@@ -697,9 +696,36 @@ La IA fue utilizada como un copiloto avanzado, NO como autor principal del códi
 
 ## 🧪 Testing
 
+### Testing Automatizado
+
+El proyecto incluye una suite completa de tests con pytest:
+
+```bash
+# Ejecutar todos los tests
+cd backend
+pip install -r requirements.txt
+pytest tests/ -v
+
+# Ejecutar tests específicos
+pytest tests/test_sustainability_scorer.py -v
+pytest tests/test_knapsack_optimizer.py -v
+pytest tests/test_substitution_engine.py -v
+pytest tests/test_api.py -v
+
+# Ejecutar con coverage
+pytest tests/ --cov=app --cov-report=html
+```
+
+### Tests Implementados
+
+- **test_sustainability_scorer.py**: 13 tests para el sistema de scoring
+- **test_knapsack_optimizer.py**: 14 tests para el algoritmo de mochila
+- **test_substitution_engine.py**: 15 tests para el motor de sustitución
+- **test_api.py**: 25 tests para endpoints de API
+
 ### Testing Manual
 
-Para validar la aplicación:
+Para validar la aplicación manualmente:
 
 1. **Backend Health Check:**
 ```bash
@@ -720,21 +746,6 @@ curl -X POST http://localhost:8000/api/shopping-list/optimize \
     "budget": 5000,
     "optimize_for": "balanced"
   }'
-```
-
-### Testing Automatizado (Preparado)
-
-Estructura para tests unitarios:
-
-```python
-# backend/tests/test_algorithms.py
-def test_knapsack_optimizer():
-    optimizer = MultiObjectiveKnapsackOptimizer()
-    # ... test cases
-
-def test_sustainability_scorer():
-    scorer = SustainabilityScorer()
-    # ... test cases
 ```
 
 ---
