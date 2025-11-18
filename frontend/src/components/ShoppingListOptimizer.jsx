@@ -1,0 +1,433 @@
+import { useState, useEffect } from 'react';
+import { shoppingListAPI, productsAPI } from '../services/api';
+import { ShoppingCart, Plus, Trash2, Sparkles, DollarSign, Leaf } from 'lucide-react';
+
+export default function ShoppingListOptimizer() {
+  const [items, setItems] = useState([]);
+  const [budget, setBudget] = useState('');
+  const [optimizeFor, setOptimizeFor] = useState('balanced');
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [templates, setTemplates] = useState(null);
+
+  useEffect(() => {
+    loadCategories();
+    loadTemplates();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const { data } = await productsAPI.getCategories();
+      setCategories(data.categories || []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
+
+  const loadTemplates = async () => {
+    try {
+      const { data } = await shoppingListAPI.getTemplates();
+      setTemplates(data.templates || {});
+    } catch (error) {
+      console.error('Error loading templates:', error);
+    }
+  };
+
+  const addItem = () => {
+    setItems([
+      ...items,
+      {
+        product_name: '',
+        category: categories[0] || 'dairy',
+        quantity: 1,
+        priority: 1,
+        preferences: [],
+      },
+    ]);
+  };
+
+  const removeItem = (index) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
+  const updateItem = (index, field, value) => {
+    const newItems = [...items];
+    newItems[index][field] = value;
+    setItems(newItems);
+  };
+
+  const loadTemplate = (templateKey) => {
+    if (!templates || !templates[templateKey]) return;
+
+    const template = templates[templateKey];
+    setItems(template.items);
+    setBudget(template.estimated_budget.toString());
+  };
+
+  const handleOptimize = async () => {
+    if (items.length === 0) {
+      alert('Agrega al menos un item a la lista');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const shoppingList = {
+        items: items,
+        budget: budget ? parseFloat(budget) : null,
+        optimize_for: optimizeFor,
+      };
+
+      const { data } = await shoppingListAPI.optimize(shoppingList);
+      setResult(data);
+    } catch (error) {
+      console.error('Error optimizing:', error);
+      alert('Error al optimizar la lista: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getSustainabilityColor = (score) => {
+    if (score >= 75) return '#10b981';
+    if (score >= 50) return '#f59e0b';
+    return '#ef4444';
+  };
+
+  return (
+    <div>
+      <div className="card">
+        <h2 className="card-title">
+          <ShoppingCart size={24} style={{ display: 'inline', marginRight: '0.5rem' }} />
+          Optimizador de Lista de Compras
+        </h2>
+
+        {/* Templates */}
+        {templates && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label className="form-label">Templates rápidos</label>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {Object.keys(templates).map((key) => (
+                <button
+                  key={key}
+                  className="btn btn-outline"
+                  onClick={() => loadTemplate(key)}
+                  style={{ fontSize: '0.875rem' }}
+                >
+                  {templates[key].name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Configuration */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div className="form-group">
+            <label className="form-label">Presupuesto (CLP)</label>
+            <input
+              type="number"
+              className="form-input"
+              placeholder="Ej: 20000"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Optimizar para</label>
+            <select
+              className="form-select"
+              value={optimizeFor}
+              onChange={(e) => setOptimizeFor(e.target.value)}
+            >
+              <option value="balanced">Balanceado</option>
+              <option value="price">Precio más bajo</option>
+              <option value="sustainability">Sostenibilidad</option>
+              <option value="health">Salud/Nutrición</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Items List */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <label className="form-label" style={{ marginBottom: 0 }}>
+              Items de la lista
+            </label>
+            <button className="btn btn-primary" onClick={addItem}>
+              <Plus size={16} />
+              Agregar Item
+            </button>
+          </div>
+
+          {items.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+              No hay items en la lista. Usa un template o agrega items manualmente.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {items.map((item, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '2fr 1fr 0.5fr 0.5fr auto',
+                    gap: '0.5rem',
+                    alignItems: 'center',
+                    padding: '0.75rem',
+                    background: '#f9fafb',
+                    borderRadius: '0.5rem',
+                  }}
+                >
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Nombre del producto"
+                    value={item.product_name}
+                    onChange={(e) => updateItem(index, 'product_name', e.target.value)}
+                  />
+
+                  <select
+                    className="form-select"
+                    value={item.category}
+                    onChange={(e) => updateItem(index, 'category', e.target.value)}
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="number"
+                    className="form-input"
+                    placeholder="Cant."
+                    min="1"
+                    value={item.quantity}
+                    onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 1)}
+                  />
+
+                  <select
+                    className="form-select"
+                    value={item.priority}
+                    onChange={(e) => updateItem(index, 'priority', parseInt(e.target.value))}
+                    title="Prioridad (1=esencial, 5=opcional)"
+                  >
+                    <option value="1">⭐⭐⭐⭐⭐</option>
+                    <option value="2">⭐⭐⭐⭐</option>
+                    <option value="3">⭐⭐⭐</option>
+                    <option value="4">⭐⭐</option>
+                    <option value="5">⭐</option>
+                  </select>
+
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => removeItem(index)}
+                    style={{ padding: '0.5rem' }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button
+          className="btn btn-primary"
+          onClick={handleOptimize}
+          disabled={loading || items.length === 0}
+          style={{ marginTop: '1.5rem', width: '100%' }}
+        >
+          <Sparkles size={16} />
+          {loading ? 'Optimizando...' : 'Optimizar Lista de Compras'}
+        </button>
+      </div>
+
+      {/* Results */}
+      {result && (
+        <div className="card">
+          <h2 className="card-title">Resultado de la Optimización</h2>
+
+          {/* Summary Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ padding: '1rem', background: '#f0fdf4', borderRadius: '0.5rem' }}>
+              <div style={{ fontSize: '0.875rem', color: '#065f46', marginBottom: '0.25rem' }}>
+                Costo Total
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#10b981' }}>
+                ${result.total_cost.toFixed(0)}
+              </div>
+            </div>
+
+            <div style={{ padding: '1rem', background: '#fef3c7', borderRadius: '0.5rem' }}>
+              <div style={{ fontSize: '0.875rem', color: '#92400e', marginBottom: '0.25rem' }}>
+                Ahorro Estimado
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#d97706' }}>
+                ${result.estimated_savings.toFixed(0)}
+              </div>
+            </div>
+
+            <div style={{ padding: '1rem', background: '#dbeafe', borderRadius: '0.5rem' }}>
+              <div style={{ fontSize: '0.875rem', color: '#1e40af', marginBottom: '0.25rem' }}>
+                Presupuesto Usado
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#2563eb' }}>
+                {result.budget_used_percentage.toFixed(0)}%
+              </div>
+            </div>
+
+            <div style={{ padding: '1rem', background: '#f3e8ff', borderRadius: '0.5rem' }}>
+              <div style={{ fontSize: '0.875rem', color: '#6b21a8', marginBottom: '0.25rem' }}>
+                Score Sostenibilidad
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#9333ea' }}>
+                {result.overall_sustainability.overall_score.toFixed(0)}/100
+              </div>
+            </div>
+          </div>
+
+          {/* Sustainability Breakdown */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem' }}>
+              Puntuaciones de Sostenibilidad
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              {[
+                { label: 'Económico', value: result.overall_sustainability.economic_score },
+                { label: 'Ambiental', value: result.overall_sustainability.environmental_score },
+                { label: 'Social', value: result.overall_sustainability.social_score },
+                { label: 'Salud', value: result.overall_sustainability.health_score },
+              ].map((score) => (
+                <div key={score.label}>
+                  <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+                    {score.label}
+                  </div>
+                  <div className="score-bar">
+                    <div
+                      className="score-fill"
+                      style={{
+                        width: `${score.value}%`,
+                        background: getSustainabilityColor(score.value),
+                      }}
+                    ></div>
+                  </div>
+                  <div style={{ fontSize: '0.875rem', fontWeight: '600', marginTop: '0.25rem' }}>
+                    {score.value.toFixed(0)}/100
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Environmental Impact */}
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f0fdf4', borderRadius: '0.5rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', color: '#065f46' }}>
+              <Leaf size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
+              Impacto Ambiental
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+              <div>
+                <div style={{ fontSize: '0.875rem', color: '#047857' }}>Huella de Carbono</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#065f46' }}>
+                  {result.total_carbon_footprint.toFixed(1)} kg CO₂
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.875rem', color: '#047857' }}>Uso de Agua</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#065f46' }}>
+                  {result.total_water_usage.toFixed(0)} L
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.875rem', color: '#047857' }}>Reciclable</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#065f46' }}>
+                  {result.recyclable_percentage.toFixed(0)}%
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Optimized Items */}
+          <div>
+            <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem' }}>
+              Productos Seleccionados ({result.optimized_items.length})
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {result.optimized_items.map((item, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: '1rem',
+                    background: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '0.5rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <div>
+                      <div style={{ fontWeight: '600', fontSize: '1rem' }}>
+                        {item.selected_product.name}
+                      </div>
+                      {item.selected_product.brand && (
+                        <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                          {item.selected_product.brand}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#10b981' }}>
+                        ${item.selected_product.price}
+                      </div>
+                      {item.savings > 0 && (
+                        <div style={{ fontSize: '0.75rem', color: '#10b981' }}>
+                          Ahorras ${item.savings.toFixed(0)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                    {item.reason}
+                  </div>
+
+                  {item.alternatives.length > 0 && (
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                      +{item.alternatives.length} alternativa(s) disponible(s)
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recommended Stores */}
+          {result.recommended_stores && result.recommended_stores.length > 0 && (
+            <div style={{ marginTop: '1.5rem' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem' }}>
+                Tiendas Recomendadas
+              </h3>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {result.recommended_stores.map((store) => (
+                  <span key={store} className="badge badge-info" style={{ padding: '0.5rem 1rem' }}>
+                    {store}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {loading && (
+        <div className="loading">
+          <div className="spinner"></div>
+        </div>
+      )}
+    </div>
+  );
+}

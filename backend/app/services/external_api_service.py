@@ -1,0 +1,256 @@
+"""
+Servicio para integración con APIs externas
+- Open Food Facts API
+- Carbon Footprint API (simulado)
+- OpenStreetMap Nominatim
+"""
+
+import aiohttp
+from typing import Optional, Dict, List
+import asyncio
+
+
+class ExternalAPIService:
+    """Servicio para consultar APIs externas de productos y sostenibilidad"""
+
+    def __init__(self):
+        self.open_food_facts_url = "https://world.openfoodfacts.org/api/v2"
+        self.nominatim_url = "https://nominatim.openstreetmap.org"
+
+    async def fetch_product_from_barcode(self, barcode: str) -> Optional[Dict]:
+        """
+        Busca información de producto en Open Food Facts por código de barras
+
+        Args:
+            barcode: Código de barras del producto
+
+        Returns:
+            Dict con información del producto o None si no se encuentra
+        """
+        url = f"https://world.openfoodfacts.org/api/v0/product/{barcode}.json"
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if data.get("status") == 1:
+                            return self._parse_open_food_facts_product(data.get("product", {}))
+        except Exception as e:
+            print(f"Error fetching from Open Food Facts: {e}")
+
+        return None
+
+    async def search_products_open_food_facts(
+        self, query: str, country: str = "chile", page_size: int = 20
+    ) -> List[Dict]:
+        """
+        Busca productos en Open Food Facts
+
+        Args:
+            query: Término de búsqueda
+            country: País (chile por defecto)
+            page_size: Número de resultados
+
+        Returns:
+            Lista de productos encontrados
+        """
+        url = f"{self.open_food_facts_url}/search"
+        params = {
+            "search_terms": query,
+            "countries": country,
+            "page_size": page_size,
+            "json": 1,
+        }
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url, params=params, timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        products = data.get("products", [])
+                        return [self._parse_open_food_facts_product(p) for p in products[:10]]
+        except Exception as e:
+            print(f"Error searching Open Food Facts: {e}")
+
+        return []
+
+    def _parse_open_food_facts_product(self, product_data: Dict) -> Dict:
+        """Parsea datos de Open Food Facts a nuestro formato"""
+        nutriments = product_data.get("nutriments", {})
+
+        return {
+            "external_id": product_data.get("id", ""),
+            "barcode": product_data.get("code", ""),
+            "name": product_data.get("product_name", "Unknown Product"),
+            "brand": product_data.get("brands", ""),
+            "category": product_data.get("categories", "general"),
+            "image_url": product_data.get("image_url", ""),
+            "ingredients": product_data.get("ingredients_text", ""),
+            "labels": product_data.get("labels", "").split(",") if product_data.get("labels") else [],
+            "nutrition": {
+                "energy_kcal": nutriments.get("energy-kcal_100g", 0),
+                "proteins": nutriments.get("proteins_100g", 0),
+                "carbohydrates": nutriments.get("carbohydrates_100g", 0),
+                "fats": nutriments.get("fat_100g", 0),
+                "fiber": nutriments.get("fiber_100g", 0),
+                "salt": nutriments.get("salt_100g", 0),
+            },
+            "nutriscore": product_data.get("nutriscore_grade", "unknown"),
+            "ecoscore": product_data.get("ecoscore_grade", "unknown"),
+        }
+
+    async def estimate_carbon_footprint(self, product_category: str, weight_kg: float = 1.0) -> Dict:
+        """
+        Estima huella de carbono basada en categoría de producto
+        (Simulado - en producción usaría Carbon Interface API)
+
+        Returns:
+            Dict con estimación de huella de carbono
+        """
+        # Factores de emisión promedio por categoría (kg CO2 por kg de producto)
+        carbon_factors = {
+            "meat": 27.0,
+            "poultry": 6.9,
+            "fish": 5.1,
+            "dairy": 1.4,
+            "eggs": 1.8,
+            "fruit": 0.3,
+            "vegetable": 0.2,
+            "cereals": 2.5,
+            "legumes": 0.9,
+            "bread": 0.5,
+            "oils": 2.0,
+            "beverages": 0.7,
+            "default": 1.5,
+        }
+
+        category_lower = product_category.lower()
+        factor = carbon_factors.get(category_lower, carbon_factors["default"])
+
+        carbon_kg = factor * weight_kg
+
+        return {
+            "carbon_footprint_kg": round(carbon_kg, 2),
+            "category": product_category,
+            "weight_kg": weight_kg,
+            "factor_used": factor,
+            "comparison": self._get_carbon_comparison(carbon_kg),
+        }
+
+    def _get_carbon_comparison(self, carbon_kg: float) -> str:
+        """Genera comparación amigable de huella de carbono"""
+        if carbon_kg < 0.5:
+            return "Muy bajo impacto - equivalente a cargar un smartphone 60 veces"
+        elif carbon_kg < 2:
+            return "Bajo impacto - equivalente a 10 km en auto"
+        elif carbon_kg < 5:
+            return "Impacto moderado - equivalente a 25 km en auto"
+        elif carbon_kg < 10:
+            return "Alto impacto - equivalente a 50 km en auto"
+        else:
+            return "Muy alto impacto - considera alternativas más sostenibles"
+
+    async def geocode_address(self, address: str) -> Optional[Dict]:
+        """
+        Geocodifica una dirección usando Nominatim de OpenStreetMap
+
+        Args:
+            address: Dirección a geocodificar
+
+        Returns:
+            Dict con coordenadas y detalles o None
+        """
+        url = f"{self.nominatim_url}/search"
+        params = {
+            "q": address,
+            "format": "json",
+            "limit": 1,
+        }
+
+        headers = {
+            "User-Agent": "LiquiVerde-SmartRetail/1.0"  # Nominatim requiere User-Agent
+        }
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url, params=params, headers=headers, timeout=aiohttp.ClientTimeout(total=5)
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if data:
+                            result = data[0]
+                            return {
+                                "latitude": float(result.get("lat", 0)),
+                                "longitude": float(result.get("lon", 0)),
+                                "display_name": result.get("display_name", ""),
+                                "address": result.get("address", {}),
+                            }
+        except Exception as e:
+            print(f"Error geocoding address: {e}")
+
+        return None
+
+    async def find_nearby_stores(
+        self, latitude: float, longitude: float, radius_km: float = 5.0
+    ) -> List[Dict]:
+        """
+        Busca tiendas cercanas usando Overpass API de OpenStreetMap
+
+        Returns:
+            Lista de tiendas cercanas
+        """
+        # Simulación - en producción usaría Overpass API
+        mock_stores = [
+            {
+                "name": "Supermercado Líder",
+                "distance_km": 1.2,
+                "address": "Av. Providencia 1234, Providencia",
+                "type": "supermarket",
+            },
+            {
+                "name": "Supermercado Jumbo",
+                "distance_km": 2.5,
+                "address": "Av. Apoquindo 4567, Las Condes",
+                "type": "supermarket",
+            },
+            {
+                "name": "Supermercado Santa Isabel",
+                "distance_km": 0.8,
+                "address": "Av. Vicuña Mackenna 890, Ñuñoa",
+                "type": "supermarket",
+            },
+        ]
+
+        # Filtrar por radio
+        nearby = [s for s in mock_stores if s["distance_km"] <= radius_km]
+        return sorted(nearby, key=lambda x: x["distance_km"])
+
+    def calculate_water_usage(self, product_category: str, weight_kg: float = 1.0) -> float:
+        """
+        Calcula uso de agua estimado por categoría de producto
+
+        Returns:
+            Litros de agua usados en producción
+        """
+        # Litros de agua por kg de producto
+        water_factors = {
+            "meat": 15400,  # Carne de res
+            "poultry": 4300,  # Pollo
+            "dairy": 1000,  # Productos lácteos
+            "eggs": 3300,  # Huevos
+            "fruit": 960,
+            "vegetable": 322,
+            "cereals": 1644,
+            "legumes": 4055,
+            "bread": 1608,
+            "default": 1500,
+        }
+
+        category_lower = product_category.lower()
+        factor = water_factors.get(category_lower, water_factors["default"])
+
+        return round(factor * weight_kg, 2)
