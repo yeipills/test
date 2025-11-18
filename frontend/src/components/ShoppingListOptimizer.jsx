@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { shoppingListAPI, productsAPI } from '../services/api';
-import { ShoppingCart, Plus, Trash2, Sparkles, DollarSign, Leaf, BarChart3, MapPin, Download } from 'lucide-react';
+import { ShoppingCart, Plus, Trash2, Sparkles, DollarSign, Leaf, BarChart3, MapPin, Download, Store, Recycle, Heart, Award } from 'lucide-react';
 import { useToast } from './Toast';
 import { useNavigation } from '../App';
 
@@ -281,13 +281,32 @@ export default function ShoppingListOptimizer() {
                               borderBottom: '1px solid #f3f4f6',
                               transition: 'background 0.15s',
                             }}
-                            onMouseEnter={(e) => e.target.style.background = '#f0fdf4'}
-                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#f0fdf4'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
                           >
                             <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{product.name}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#6b7280', display: 'flex', justifyContent: 'space-between' }}>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span>{product.category}</span>
                               <span style={{ color: '#10b981', fontWeight: 600 }}>${product.price}</span>
+                            </div>
+                            {/* Store and labels */}
+                            <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                              {product.store && (
+                                <span style={{ fontSize: '0.65rem', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                                  <Store size={10} />
+                                  {product.store}
+                                </span>
+                              )}
+                              {product.labels && product.labels.includes('organic') && (
+                                <span style={{ fontSize: '0.6rem', background: '#d1fae5', color: '#065f46', padding: '0.1rem 0.3rem', borderRadius: '9999px' }}>
+                                  Orgánico
+                                </span>
+                              )}
+                              {product.sustainability?.local_product && (
+                                <span style={{ fontSize: '0.6rem', background: '#dbeafe', color: '#1e40af', padding: '0.1rem 0.3rem', borderRadius: '9999px' }}>
+                                  Local
+                                </span>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -484,17 +503,105 @@ export default function ShoppingListOptimizer() {
                           {item.selected_product.brand}
                         </div>
                       )}
+                      {/* Unit/quantity info */}
+                      {item.selected_product.unit && item.selected_product.unit !== 'unit' && (
+                        <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                          {item.selected_product.quantity || 1} {item.selected_product.unit}
+                        </div>
+                      )}
                     </div>
-                    <div>
+                    <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#10b981' }}>
                         ${item.selected_product.price}
                       </div>
                       {item.savings > 0 && (
-                        <div style={{ fontSize: '0.75rem', color: '#10b981' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '600' }}>
                           Ahorras ${item.savings.toFixed(0)}
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* Store info */}
+                  {item.selected_product.store && (
+                    <div style={{
+                      fontSize: '0.8rem',
+                      color: '#4b5563',
+                      marginBottom: '0.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem'
+                    }}>
+                      <Store size={12} />
+                      {item.selected_product.store}
+                    </div>
+                  )}
+
+                  {/* Labels and sustainability indicators */}
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                    {item.selected_product.labels && item.selected_product.labels.map((label, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          fontSize: '0.65rem',
+                          background: label.toLowerCase().includes('organic') ? '#d1fae5' : '#f3f4f6',
+                          color: label.toLowerCase().includes('organic') ? '#065f46' : '#4b5563',
+                          padding: '0.15rem 0.4rem',
+                          borderRadius: '9999px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.2rem'
+                        }}
+                      >
+                        {label.toLowerCase().includes('organic') && <Leaf size={10} />}
+                        {label}
+                      </span>
+                    ))}
+                    {item.selected_product.sustainability?.local_product && (
+                      <span style={{
+                        fontSize: '0.65rem',
+                        background: '#dbeafe',
+                        color: '#1e40af',
+                        padding: '0.15rem 0.4rem',
+                        borderRadius: '9999px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.2rem'
+                      }}>
+                        <MapPin size={10} />
+                        Local
+                      </span>
+                    )}
+                    {item.selected_product.sustainability?.packaging_recyclable && (
+                      <span style={{
+                        fontSize: '0.65rem',
+                        background: '#d1fae5',
+                        color: '#065f46',
+                        padding: '0.15rem 0.4rem',
+                        borderRadius: '9999px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.2rem'
+                      }}>
+                        <Recycle size={10} />
+                        Reciclable
+                      </span>
+                    )}
+                    {item.selected_product.sustainability?.fair_trade && (
+                      <span style={{
+                        fontSize: '0.65rem',
+                        background: '#fef3c7',
+                        color: '#92400e',
+                        padding: '0.15rem 0.4rem',
+                        borderRadius: '9999px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.2rem'
+                      }}>
+                        <Award size={10} />
+                        Comercio Justo
+                      </span>
+                    )}
                   </div>
 
                   <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>

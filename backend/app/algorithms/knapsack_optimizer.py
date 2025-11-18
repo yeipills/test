@@ -147,11 +147,11 @@ class MultiObjectiveKnapsackOptimizer:
             return max(candidates, key=balanced_score)
 
     def _get_default_product(self, candidates: List[Product]) -> Product:
-        """Obtiene el producto por defecto (primero/más común) para calcular ahorro"""
+        """Obtiene el producto por defecto (más caro) para calcular ahorro real"""
         if not candidates:
             return None
-        # El primero es el que más coincide con el nombre buscado
-        return candidates[0]
+        # Usar el más caro como referencia para mostrar ahorro real
+        return max(candidates, key=lambda p: p.price)
 
     def _fit_to_budget(
         self,
