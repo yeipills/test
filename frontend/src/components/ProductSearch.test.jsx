@@ -11,6 +11,16 @@ vi.mock('../services/api', () => ({
   },
 }));
 
+// Mock Toast hook
+vi.mock('./Toast', () => ({
+  useToast: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn()
+  })
+}));
+
 describe('ProductSearch Component', () => {
   it('renders search title', () => {
     render(<ProductSearch />);

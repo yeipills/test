@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { productsAPI, recommendationsAPI } from '../services/api';
-import { Plus, X, BarChart3, Zap } from 'lucide-react';
+import { Plus, X, BarChart3, Zap, ShoppingCart, MapPin } from 'lucide-react';
+import { useToast } from './Toast';
+import { useNavigation } from '../App';
 
 export default function ProductComparator() {
+  const toast = useToast();
+  const { navigateTo, navigationData, clearNavigationData } = useNavigation();
   const [products, setProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [comparison, setComparison] = useState(null);
@@ -11,6 +15,20 @@ export default function ProductComparator() {
   useEffect(() => {
     loadProducts();
   }, []);
+
+  // Handle navigation data (product IDs from optimizer)
+  useEffect(() => {
+    if (navigationData && navigationData.productIds && products.length > 0) {
+      const productsToSelect = products.filter(p =>
+        navigationData.productIds.includes(p.id)
+      );
+      if (productsToSelect.length > 0) {
+        setSelectedProducts(productsToSelect);
+        toast.info(`${productsToSelect.length} productos cargados para comparar`);
+      }
+      clearNavigationData();
+    }
+  }, [navigationData, products, clearNavigationData]);
 
   const loadProducts = async () => {
     try {
@@ -23,12 +41,12 @@ export default function ProductComparator() {
 
   const addProduct = (product) => {
     if (selectedProducts.find((p) => p.id === product.id)) {
-      alert('Este producto ya está seleccionado');
+      toast.warning('Este producto ya está seleccionado');
       return;
     }
 
     if (selectedProducts.length >= 4) {
-      alert('Máximo 4 productos para comparar');
+      toast.warning('Máximo 4 productos para comparar');
       return;
     }
 
@@ -43,7 +61,7 @@ export default function ProductComparator() {
 
   const handleCompare = async () => {
     if (selectedProducts.length < 2) {
-      alert('Selecciona al menos 2 productos para comparar');
+      toast.warning('Selecciona al menos 2 productos para comparar');
       return;
     }
 
@@ -51,9 +69,10 @@ export default function ProductComparator() {
       const productIds = selectedProducts.map((p) => p.id);
       const { data } = await productsAPI.compare(productIds);
       setComparison(data);
+      toast.success('Comparación completada');
     } catch (error) {
       console.error('Error comparing:', error);
-      alert('Error al comparar productos');
+      toast.error('Error al comparar productos');
     }
   };
 

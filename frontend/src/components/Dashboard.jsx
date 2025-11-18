@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { recommendationsAPI, statsAPI } from '../services/api';
-import { TrendingUp, Leaf, Award, DollarSign, ShoppingBag, ArrowRight, Zap } from 'lucide-react';
+import { TrendingUp, Leaf, Award, DollarSign, ShoppingBag, ArrowRight, Zap, Search, ShoppingCart } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -14,10 +14,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { useNavigation } from '../App';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
 
 export default function Dashboard() {
+  const { navigateTo } = useNavigation();
   const [stats, setStats] = useState(null);
   const [topSustainable, setTopSustainable] = useState([]);
   const [bestValue, setBestValue] = useState([]);
@@ -121,6 +123,7 @@ export default function Dashboard() {
               <div
                 key={index}
                 className="savings-item"
+                onClick={() => navigateTo('search')}
                 style={{
                   padding: '0.75rem',
                   background: 'white',
@@ -166,6 +169,39 @@ export default function Dashboard() {
               +{savingsOps.length - 3} oportunidades más
             </div>
           )}
+
+          {/* CTA Button */}
+          <button
+            className="btn btn-primary"
+            onClick={() => navigateTo('optimizer')}
+            style={{ width: '100%', marginTop: '1rem' }}
+          >
+            <ShoppingCart size={16} />
+            Optimizar mi Lista
+          </button>
+        </div>
+      )}
+
+      {/* Empty State - No Data */}
+      {!loading && !stats && (
+        <div className="card" style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
+          <Search size={48} style={{ color: '#d1d5db', marginBottom: '1rem' }} />
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>
+            Bienvenido a LiquiVerde
+          </h3>
+          <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
+            Comienza explorando productos o creando tu primera lista de compras optimizada
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="btn btn-primary" onClick={() => navigateTo('search')}>
+              <Search size={16} />
+              Explorar Productos
+            </button>
+            <button className="btn btn-outline" onClick={() => navigateTo('optimizer')}>
+              <ShoppingCart size={16} />
+              Crear Lista
+            </button>
+          </div>
         </div>
       )}
 

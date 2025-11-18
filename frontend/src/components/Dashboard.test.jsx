@@ -58,6 +58,15 @@ vi.mock('../services/api', () => ({
   },
 }));
 
+// Mock Navigation hook
+vi.mock('../App', () => ({
+  useNavigation: () => ({
+    navigateTo: vi.fn(),
+    navigationData: null,
+    clearNavigationData: vi.fn()
+  })
+}));
+
 describe('Dashboard Component', () => {
   it('renders loading state initially', () => {
     render(<Dashboard />);

@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { shoppingListAPI, productsAPI } from '../services/api';
-import { ShoppingCart, Plus, Trash2, Sparkles, DollarSign, Leaf } from 'lucide-react';
+import { ShoppingCart, Plus, Trash2, Sparkles, DollarSign, Leaf, BarChart3, MapPin, Download } from 'lucide-react';
+import { useToast } from './Toast';
+import { useNavigation } from '../App';
 
 export default function ShoppingListOptimizer() {
+  const toast = useToast();
+  const { navigateTo } = useNavigation();
   const [items, setItems] = useState([]);
   const [budget, setBudget] = useState('');
   const [optimizeFor, setOptimizeFor] = useState('balanced');
@@ -106,7 +110,14 @@ export default function ShoppingListOptimizer() {
 
   const handleOptimize = async () => {
     if (items.length === 0) {
-      alert('Agrega al menos un item a la lista');
+      toast.warning('Agrega al menos un item a la lista');
+      return;
+    }
+
+    // Validate items have names
+    const emptyItems = items.filter(item => !item.product_name.trim());
+    if (emptyItems.length > 0) {
+      toast.warning('Todos los items deben tener nombre');
       return;
     }
 
@@ -120,12 +131,28 @@ export default function ShoppingListOptimizer() {
 
       const { data } = await shoppingListAPI.optimize(shoppingList);
       setResult(data);
+      toast.success(`Lista optimizada! Ahorro: $${data.estimated_savings.toFixed(0)}`);
     } catch (error) {
       console.error('Error optimizing:', error);
-      alert('Error al optimizar la lista: ' + error.message);
+      toast.error('Error al optimizar la lista');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Navigate to compare with selected products
+  const handleCompareProducts = () => {
+    if (result && result.optimized_items.length > 0) {
+      const productIds = result.optimized_items
+        .slice(0, 4)
+        .map(item => item.selected_product.id);
+      navigateTo('compare', { productIds });
+    }
+  };
+
+  // Navigate to stores
+  const handleViewStores = () => {
+    navigateTo('stores');
   };
 
   const getSustainabilityColor = (score) => {
@@ -499,6 +526,48 @@ export default function ShoppingListOptimizer() {
               </div>
             </div>
           )}
+
+          {/* Action Buttons - Cross Navigation */}
+          <div style={{
+            marginTop: '1.5rem',
+            paddingTop: '1.5rem',
+            borderTop: '1px solid #e5e7eb',
+            display: 'flex',
+            gap: '0.75rem',
+            flexWrap: 'wrap'
+          }}>
+            <button
+              className="btn btn-primary"
+              onClick={handleCompareProducts}
+              style={{ flex: '1', minWidth: '150px' }}
+            >
+              <BarChart3 size={16} />
+              Comparar Productos
+            </button>
+            <button
+              className="btn btn-outline"
+              onClick={handleViewStores}
+              style={{ flex: '1', minWidth: '150px' }}
+            >
+              <MapPin size={16} />
+              Ver en Tiendas
+            </button>
+            <button
+              className="btn btn-outline"
+              onClick={() => {
+                // Simple export to clipboard
+                const text = result.optimized_items
+                  .map(item => `${item.selected_product.name} - $${item.selected_product.price}`)
+                  .join('\n');
+                navigator.clipboard.writeText(text);
+                toast.success('Lista copiada al portapapeles');
+              }}
+              style={{ flex: '1', minWidth: '150px' }}
+            >
+              <Download size={16} />
+              Exportar Lista
+            </button>
+          </div>
         </div>
       )}
 

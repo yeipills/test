@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { productsAPI } from '../services/api';
-import { Search, Barcode, Leaf, TrendingUp, Heart } from 'lucide-react';
+import { Search, Barcode, Leaf, TrendingUp, Heart, PackageSearch } from 'lucide-react';
+import { useToast } from './Toast';
 
 export default function ProductSearch() {
+  const toast = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [barcode, setBarcode] = useState('');
   const [products, setProducts] = useState([]);
@@ -85,14 +87,25 @@ export default function ProductSearch() {
   };
 
   const handleBarcodeSearch = async () => {
-    if (!barcode) return;
+    if (!barcode) {
+      toast.warning('Ingresa un código de barras');
+      return;
+    }
+
+    // Validate barcode format (numbers only)
+    if (!/^\d+$/.test(barcode)) {
+      toast.warning('El código de barras debe contener solo números');
+      return;
+    }
 
     try {
       setLoading(true);
       const { data } = await productsAPI.getByBarcode(barcode, true);
       setProducts([data.product]);
+      toast.success('Producto encontrado');
     } catch (error) {
-      alert('Producto no encontrado con ese código de barras');
+      toast.error('Producto no encontrado con ese código de barras');
+      setProducts([]);
     } finally {
       setLoading(false);
     }

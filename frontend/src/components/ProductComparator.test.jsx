@@ -17,6 +17,25 @@ vi.mock('../services/api', () => ({
   },
 }));
 
+// Mock Toast hook
+vi.mock('./Toast', () => ({
+  useToast: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn()
+  })
+}));
+
+// Mock Navigation hook
+vi.mock('../App', () => ({
+  useNavigation: () => ({
+    navigateTo: vi.fn(),
+    navigationData: null,
+    clearNavigationData: vi.fn()
+  })
+}));
+
 describe('ProductComparator Component', () => {
   it('renders comparator title', () => {
     render(<ProductComparator />);
