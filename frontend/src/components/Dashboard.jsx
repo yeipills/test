@@ -66,44 +66,44 @@ export default function Dashboard() {
 
       {/* Stats Overview */}
       {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-          <div className="card" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <ShoppingBag size={24} />
-              <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>Total Productos</div>
+        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div className="card" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', marginBottom: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <ShoppingBag size={20} />
+              <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Total Productos</div>
             </div>
-            <div style={{ fontSize: '2rem', fontWeight: '700' }}>{stats.total_products}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{stats.total_products}</div>
           </div>
 
-          <div className="card" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <Award size={24} />
-              <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>Categorías</div>
+          <div className="card" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', marginBottom: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <Award size={20} />
+              <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Categorías</div>
             </div>
-            <div style={{ fontSize: '2rem', fontWeight: '700' }}>{stats.categories_count}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{stats.categories_count}</div>
           </div>
 
-          <div className="card" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <DollarSign size={24} />
-              <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>Precio Promedio</div>
+          <div className="card" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', marginBottom: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <DollarSign size={20} />
+              <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Precio Promedio</div>
             </div>
-            <div style={{ fontSize: '2rem', fontWeight: '700' }}>${stats.average_price.toFixed(0)}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>${stats.average_price.toFixed(0)}</div>
           </div>
 
-          <div className="card" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', color: 'white' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <Leaf size={24} />
-              <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>Productos Locales</div>
+          <div className="card" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', color: 'white', marginBottom: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <Leaf size={20} />
+              <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Productos Locales</div>
             </div>
-            <div style={{ fontSize: '2rem', fontWeight: '700' }}>{stats.labels?.local || 0}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{stats.labels?.local || 0}</div>
           </div>
         </div>
       )}
 
       {/* Charts Section */}
       {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
           {/* Categories Bar Chart */}
           <div className="card">
             <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: '#374151' }}>

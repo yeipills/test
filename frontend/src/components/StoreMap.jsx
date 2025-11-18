@@ -121,8 +121,8 @@ export default function StoreMap() {
       </h1>
 
       {/* Filters and Location */}
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <div className="store-filters" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
           <button
             onClick={getUserLocation}
             disabled={loading}

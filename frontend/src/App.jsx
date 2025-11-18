@@ -81,15 +81,16 @@ function App() {
       <main className="container">{renderContent()}</main>
 
       {/* Footer */}
-      <footer style={{ padding: '2rem', textAlign: 'center', color: '#6b7280', borderTop: '1px solid #e5e7eb' }}>
-        <div style={{ marginBottom: '0.5rem' }}>
-          <strong>LiquiVerde Smart Retail Platform</strong> - Grupo Lagos
+      <footer style={{ padding: '1.5rem 1rem', textAlign: 'center', color: '#6b7280', borderTop: '1px solid #e5e7eb' }}>
+        <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+          <strong>LiquiVerde Smart Retail Platform</strong>
+          <span style={{ display: 'block', marginTop: '0.25rem' }}>Grupo Lagos</span>
         </div>
-        <div style={{ fontSize: '0.875rem' }}>
-          Plataforma de compras inteligentes con optimización multi-objetivo y análisis de sostenibilidad
+        <div style={{ fontSize: '0.8rem', lineHeight: '1.4' }}>
+          Plataforma de compras inteligentes
         </div>
-        <div style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>
-          Algoritmos: Mochila Multi-objetivo | Scoring de Sostenibilidad | Sustitución Inteligente
+        <div style={{ fontSize: '0.7rem', marginTop: '0.5rem', opacity: 0.8 }}>
+          Mochila Multi-objetivo | Scoring | Sustitución
         </div>
       </footer>
     </div>
