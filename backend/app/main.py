@@ -203,8 +203,9 @@ async def get_nearby_stores(lat: float, lng: float, radius: float = 5.0):
                 "rating": store.get("rating", 0),
                 "hasOrganic": check_organic(store.get("name", "")),
                 "hasLocal": check_local(store.get("name", "")),
-                "hours": "8:00 - 22:00",
-                "phone": "+56 2 2345 6789",
+                "hours": store.get("hours", "Consultar horario"),
+                "phone": store.get("phone", ""),
+                "is_open": store.get("is_open"),
             }
             for i, store in enumerate(stores)
         ],

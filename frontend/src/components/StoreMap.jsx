@@ -347,15 +347,30 @@ export default function StoreMap() {
 
               {selectedStore?.id === store.id && (
                 <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #e5e7eb' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.7rem', color: '#6b7280' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Clock size={10} />
-                      {store.hours}
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Phone size={10} />
-                      {store.phone}
-                    </span>
+                  {/* Open/Closed status */}
+                  {store.is_open !== null && store.is_open !== undefined && (
+                    <div style={{
+                      marginBottom: '0.5rem',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      color: store.is_open ? '#10b981' : '#ef4444'
+                    }}>
+                      {store.is_open ? '● Abierto ahora' : '● Cerrado'}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.5rem', fontSize: '0.7rem', color: '#6b7280' }}>
+                    {store.hours && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <Clock size={10} />
+                        {store.hours}
+                      </span>
+                    )}
+                    {store.phone && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <Phone size={10} />
+                        {store.phone}
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={(e) => {

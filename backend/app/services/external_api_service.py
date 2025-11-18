@@ -203,7 +203,7 @@ class ExternalAPIService:
         Busca tiendas cercanas usando Google Places API
 
         Returns:
-            Lista de tiendas cercanas
+            Lista de tiendas cercanas con detalles
         """
         if not self.google_maps_api_key:
             print("Google Maps API key not configured - cannot search nearby stores")
@@ -226,14 +226,21 @@ class ExternalAPIService:
                         data = await response.json()
                         if data.get("status") == "OK":
                             stores = []
-                            for place in data.get("results", []):
+                            places = data.get("results", [])[:10]  # Limit to 10 stores
+
+                            for place in places:
                                 store_location = place["geometry"]["location"]
                                 # Calculate approximate distance
                                 distance = self._calculate_distance(
                                     latitude, longitude,
                                     store_location["lat"], store_location["lng"]
                                 )
-                                stores.append({
+
+                                # Get opening hours status from nearby search
+                                opening_hours = place.get("opening_hours", {})
+                                is_open = opening_hours.get("open_now", None)
+
+                                store_data = {
                                     "name": place.get("name", "Unknown"),
                                     "distance_km": round(distance, 2),
                                     "address": place.get("vicinity", ""),
@@ -242,12 +249,66 @@ class ExternalAPIService:
                                     "rating": place.get("rating", 0),
                                     "lat": store_location["lat"],
                                     "lng": store_location["lng"],
-                                })
-                            return sorted(stores, key=lambda x: x["distance_km"])
+                                    "is_open": is_open,
+                                }
+                                stores.append(store_data)
+
+                            # Fetch details for top 5 stores (hours and phone)
+                            sorted_stores = sorted(stores, key=lambda x: x["distance_km"])
+                            for store in sorted_stores[:5]:
+                                if store.get("place_id"):
+                                    details = await self._get_place_details(session, store["place_id"])
+                                    if details:
+                                        store.update(details)
+
+                            return sorted_stores
         except Exception as e:
             print(f"Error finding nearby stores: {e}")
 
         return []
+
+    async def _get_place_details(self, session, place_id: str) -> Optional[Dict]:
+        """
+        Obtiene detalles de un lugar (horarios, teléfono)
+        """
+        url = f"{self.google_maps_url}/place/details/json"
+        params = {
+            "place_id": place_id,
+            "fields": "formatted_phone_number,opening_hours",
+            "key": self.google_maps_api_key,
+        }
+
+        try:
+            async with session.get(
+                url, params=params, timeout=aiohttp.ClientTimeout(total=5)
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if data.get("status") == "OK":
+                        result = data.get("result", {})
+                        details = {}
+
+                        # Phone number
+                        if result.get("formatted_phone_number"):
+                            details["phone"] = result["formatted_phone_number"]
+
+                        # Opening hours
+                        opening_hours = result.get("opening_hours", {})
+                        if opening_hours.get("weekday_text"):
+                            # Get today's hours
+                            import datetime
+                            today = datetime.datetime.now().weekday()
+                            weekday_text = opening_hours["weekday_text"]
+                            if today < len(weekday_text):
+                                details["hours"] = weekday_text[today]
+                            else:
+                                details["hours"] = weekday_text[0] if weekday_text else None
+
+                        return details if details else None
+        except Exception as e:
+            print(f"Error getting place details: {e}")
+
+        return None
 
     def _calculate_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """Calculate distance between two points using Haversine formula"""
