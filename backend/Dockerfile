@@ -16,8 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código de la aplicación
 COPY app/ ./app/
 
-# Copiar dataset
-COPY ../data/ ./data/ 2>/dev/null || mkdir -p ./data
+# Crear directorio para dataset (se monta como volumen en docker-compose)
+RUN mkdir -p ./data
 
 # Exponer puerto
 EXPOSE 8000
