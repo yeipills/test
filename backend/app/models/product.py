@@ -15,12 +15,14 @@ class NutritionInfo(BaseModel):
 
 class SustainabilityScore(BaseModel):
     """Multi-dimensional sustainability scoring"""
-    economic_score: float = Field(..., ge=0, le=100, description="Price efficiency score")
-    environmental_score: float = Field(..., ge=0, le=100, description="Environmental impact score")
-    social_score: float = Field(..., ge=0, le=100, description="Social responsibility score")
-    health_score: float = Field(..., ge=0, le=100, description="Nutritional health score")
-    overall_score: float = Field(..., ge=0, le=100, description="Weighted overall score")
+    # Calculated scores (optional - computed by SustainabilityScorer)
+    economic_score: float = Field(default=0, ge=0, le=100, description="Price efficiency score")
+    environmental_score: float = Field(default=0, ge=0, le=100, description="Environmental impact score")
+    social_score: float = Field(default=0, ge=0, le=100, description="Social responsibility score")
+    health_score: float = Field(default=0, ge=0, le=100, description="Nutritional health score")
+    overall_score: float = Field(default=0, ge=0, le=100, description="Weighted overall score")
 
+    # Raw sustainability data (from product data)
     carbon_footprint_kg: Optional[float] = Field(None, description="CO2 kg per unit")
     water_usage_liters: Optional[float] = Field(None, description="Water liters per unit")
     packaging_recyclable: Optional[bool] = False

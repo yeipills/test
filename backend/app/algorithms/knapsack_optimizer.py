@@ -12,7 +12,7 @@ Implementación: Algoritmo genético con enfoque de Pareto-optimal
 import random
 import math
 from typing import List, Dict, Tuple, Optional
-from ..models.product import Product
+from ..models.product import Product, SustainabilityScore
 from ..models.shopping_list import ShoppingListItem, ShoppingList, OptimizedProduct, OptimizedShoppingList
 from .sustainability_scorer import SustainabilityScorer
 

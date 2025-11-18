@@ -13,6 +13,7 @@ from .routes import products_router, shopping_list_router, recommendations_route
 # Crear aplicación FastAPI
 app = FastAPI(
     title="LiquiVerde Smart Retail API",
+    redoc_url=None,  # Disable ReDoc (use /docs Swagger UI instead)
     description="""
     🌿 Plataforma de retail inteligente para compras sostenibles y económicas
 
@@ -124,6 +125,10 @@ async def get_stats():
         return {
             "total_products": 0,
             "categories_count": 0,
+            "categories": {},
+            "average_price": 0,
+            "price_range": {"min": 0, "max": 0},
+            "labels": {"organic": 0, "local": 0},
             "message": "No products in catalog",
         }
 
