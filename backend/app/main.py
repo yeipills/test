@@ -174,6 +174,23 @@ async def get_nearby_stores(lat: float, lng: float, radius: float = 5.0):
     api_service = ExternalAPIService()
     stores = await api_service.find_nearby_stores(lat, lng, radius)
 
+    def check_organic(name: str) -> bool:
+        """Check if store likely has organic products based on name"""
+        name_lower = name.lower()
+        organic_keywords = ["organic", "orgánico", "organico", "natural", "bio", "eco", "verde", "saludable", "health", "whole"]
+        return any(keyword in name_lower for keyword in organic_keywords)
+
+    def check_local(name: str) -> bool:
+        """Check if store is local (not a large chain)"""
+        name_lower = name.lower()
+        # Large chains in Chile
+        large_chains = ["jumbo", "líder", "lider", "santa isabel", "tottus", "unimarc", "walmart", "costco", "makro"]
+        is_chain = any(chain in name_lower for chain in large_chains)
+        # Local store indicators
+        local_keywords = ["local", "barrio", "vecino", "minimarket", "almacén", "almacen", "botillería", "botilleria", "express", "mini"]
+        is_local = any(keyword in name_lower for keyword in local_keywords)
+        return is_local or not is_chain
+
     return {
         "stores": [
             {
@@ -184,8 +201,8 @@ async def get_nearby_stores(lat: float, lng: float, radius: float = 5.0):
                 "lng": store.get("lng", lng),
                 "distance": store.get("distance_km", 0),
                 "rating": store.get("rating", 0),
-                "hasOrganic": True,
-                "hasLocal": True,
+                "hasOrganic": check_organic(store.get("name", "")),
+                "hasLocal": check_local(store.get("name", "")),
                 "hours": "8:00 - 22:00",
                 "phone": "+56 2 2345 6789",
             }
