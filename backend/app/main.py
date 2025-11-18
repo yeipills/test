@@ -180,12 +180,14 @@ async def get_nearby_stores(lat: float, lng: float, radius: float = 5.0):
                 "id": i + 1,
                 "name": store.get("name", "Unknown"),
                 "address": store.get("address", ""),
-                "lat": lat + (i * 0.01),  # Approximate position
-                "lng": lng + (i * 0.01),
+                "lat": store.get("lat", lat),
+                "lng": store.get("lng", lng),
                 "distance": store.get("distance_km", 0),
                 "rating": store.get("rating", 0),
                 "hasOrganic": True,
                 "hasLocal": True,
+                "hours": "8:00 - 22:00",
+                "phone": "+56 2 2345 6789",
             }
             for i, store in enumerate(stores)
         ],

@@ -240,6 +240,8 @@ class ExternalAPIService:
                                     "type": "supermarket",
                                     "place_id": place.get("place_id", ""),
                                     "rating": place.get("rating", 0),
+                                    "lat": store_location["lat"],
+                                    "lng": store_location["lng"],
                                 })
                             return sorted(stores, key=lambda x: x["distance_km"])
         except Exception as e:
