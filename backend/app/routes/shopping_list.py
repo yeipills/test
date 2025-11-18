@@ -3,10 +3,18 @@ Rutas de API para optimización de listas de compras
 """
 
 from fastapi import APIRouter, HTTPException
-from typing import List
+from typing import List, Optional
+from pydantic import BaseModel
 from ..models.shopping_list import ShoppingList, ShoppingListItem
 from ..services.product_service import ProductService
 from ..algorithms import MultiObjectiveKnapsackOptimizer, SustainabilityScorer
+
+
+class QuickOptimizeRequest(BaseModel):
+    """Request model for quick optimization"""
+    product_names: List[str]
+    budget: Optional[float] = None
+    optimize_for: str = "balanced"
 
 router = APIRouter(prefix="/api/shopping-list", tags=["shopping-list"])
 
@@ -63,11 +71,7 @@ async def optimize_shopping_list(shopping_list: ShoppingList):
 
 
 @router.post("/quick-optimize")
-async def quick_optimize(
-    product_names: List[str],
-    budget: float = None,
-    optimize_for: str = "balanced"
-):
+async def quick_optimize(request: QuickOptimizeRequest):
     """
     Versión simplificada de optimización: solo nombres de productos
 
@@ -82,7 +86,7 @@ async def quick_optimize(
     """
     # Convertir nombres a items de lista
     items = []
-    for name in product_names:
+    for name in request.product_names:
         # Buscar el producto
         results = product_service.search_products(query=name)
         if results:
@@ -101,8 +105,8 @@ async def quick_optimize(
 
     shopping_list = ShoppingList(
         items=items,
-        budget=budget,
-        optimize_for=optimize_for,
+        budget=request.budget,
+        optimize_for=request.optimize_for,
     )
 
     # Optimizar

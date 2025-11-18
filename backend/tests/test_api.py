@@ -73,7 +73,10 @@ class TestProductsEndpoints:
 
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
+        assert "count" in data
+        assert "products" in data
+        assert isinstance(data["products"], list)
+        assert data["count"] == 20  # Dataset has 20 products
 
     def test_get_categories(self):
         """Test getting product categories"""
@@ -81,7 +84,9 @@ class TestProductsEndpoints:
 
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
+        assert "categories" in data
+        assert isinstance(data["categories"], list)
+        assert len(data["categories"]) == 10  # Dataset has 10 categories
 
     def test_search_products(self):
         """Test product search"""
@@ -89,7 +94,9 @@ class TestProductsEndpoints:
 
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
+        assert "results" in data
+        assert isinstance(data["results"], list)
+        assert len(data["results"]) >= 1  # Should find at least 1 milk product
 
     def test_search_with_category_filter(self):
         """Test product search with category filter"""
@@ -100,9 +107,9 @@ class TestProductsEndpoints:
 
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
+        assert "results" in data
         # All results should be in dairy category
-        for product in data:
+        for product in data["results"]:
             assert product["category"] == "dairy"
 
     def test_search_with_price_filter(self):
@@ -114,7 +121,8 @@ class TestProductsEndpoints:
 
         assert response.status_code == 200
         data = response.json()
-        for product in data:
+        assert "results" in data
+        for product in data["results"]:
             assert product["price"] <= 2000
 
     def test_get_catalog(self):
@@ -123,7 +131,9 @@ class TestProductsEndpoints:
 
         assert response.status_code == 200
         data = response.json()
-        assert "products" in data or isinstance(data, list)
+        # Catalog returns dict of category -> products
+        assert isinstance(data, dict)
+        assert len(data) > 0
 
     def test_compare_products(self):
         """Test product comparison endpoint"""
@@ -179,7 +189,9 @@ class TestShoppingListEndpoints:
 
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
+        assert "templates" in data
+        assert isinstance(data["templates"], dict)
+        assert len(data["templates"]) > 0
 
     def test_optimize_with_preferences(self):
         """Test optimization with user preferences"""

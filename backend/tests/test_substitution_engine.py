@@ -36,7 +36,7 @@ class TestIntelligentSubstitutionEngine:
         )
 
         for sub in substitutions:
-            assert sub.substitute.id != sample_product.id
+            assert sub.suggested_product.id != sample_product.id
 
     def test_substitutions_have_required_fields(
         self, substitution_engine, sample_product, product_list
@@ -47,8 +47,7 @@ class TestIntelligentSubstitutionEngine:
         )
 
         for sub in substitutions:
-            assert hasattr(sub, 'substitute')
-            assert hasattr(sub, 'similarity_score')
+            assert hasattr(sub, 'suggested_product')
             assert hasattr(sub, 'substitution_score')
             assert hasattr(sub, 'price_difference')
             assert hasattr(sub, 'sustainability_improvement')
@@ -62,7 +61,7 @@ class TestIntelligentSubstitutionEngine:
         )
 
         for sub in substitutions:
-            assert 0 <= sub.similarity_score <= 1
+            assert 0 <= sub.substitution_score <= 100
 
     def test_same_category_higher_similarity(self, substitution_engine):
         """Test that same category products have higher similarity"""
@@ -81,11 +80,11 @@ class TestIntelligentSubstitutionEngine:
         )
 
         # Find the substitutions
-        same_cat_sub = next((s for s in subs if s.substitute.id == "same"), None)
-        diff_cat_sub = next((s for s in subs if s.substitute.id == "diff"), None)
+        same_cat_sub = next((s for s in subs if s.suggested_product.id == "same"), None)
+        diff_cat_sub = next((s for s in subs if s.suggested_product.id == "diff"), None)
 
         if same_cat_sub and diff_cat_sub:
-            assert same_cat_sub.similarity_score > diff_cat_sub.similarity_score
+            assert same_cat_sub.substitution_score > diff_cat_sub.substitution_score
 
     def test_price_focused_substitution(self, substitution_engine):
         """Test price-focused substitution prefers cheaper products"""
@@ -106,10 +105,10 @@ class TestIntelligentSubstitutionEngine:
         if len(subs) >= 2:
             # Cheap should rank higher
             cheap_idx = next(
-                (i for i, s in enumerate(subs) if s.substitute.id == "cheap"), -1
+                (i for i, s in enumerate(subs) if s.suggested_product.id == "cheap"), -1
             )
             medium_idx = next(
-                (i for i, s in enumerate(subs) if s.substitute.id == "medium"), -1
+                (i for i, s in enumerate(subs) if s.suggested_product.id == "medium"), -1
             )
             if cheap_idx >= 0 and medium_idx >= 0:
                 assert cheap_idx < medium_idx
@@ -158,7 +157,7 @@ class TestIntelligentSubstitutionEngine:
 
         if subs:
             # Sustainable should rank first
-            assert subs[0].substitute.id == "sustainable"
+            assert subs[0].suggested_product.id == "sustainable"
 
     def test_max_results_limit(self, substitution_engine):
         """Test that max_results limits the number of substitutions"""
@@ -171,7 +170,7 @@ class TestIntelligentSubstitutionEngine:
         ]
 
         subs = substitution_engine.find_substitutions(
-            original, candidates, max_results=3
+            original, candidates, max_suggestions=3
         )
 
         assert len(subs) <= 3
@@ -263,7 +262,8 @@ class TestIntelligentSubstitutionEngine:
         subs = substitution_engine.find_substitutions(original, [cheaper])
 
         if subs:
-            assert subs[0].price_difference == -500.0
+            # price_difference = original - candidate = 1500 - 1000 = 500 (positive means savings)
+            assert subs[0].price_difference == 500.0
 
     def test_balanced_focus(self, substitution_engine):
         """Test balanced focus considers all factors"""
@@ -294,4 +294,4 @@ class TestIntelligentSubstitutionEngine:
         )
 
         # Balanced should be among top results
-        assert any(s.substitute.id == "balanced" for s in subs[:2])
+        assert any(s.suggested_product.id == "balanced" for s in subs[:2])

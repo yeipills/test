@@ -311,6 +311,11 @@ class MultiObjectiveKnapsackOptimizer:
     def _crossover(self, parents: List[List[int]], n_items: int) -> List[List[int]]:
         """Crossover de un punto"""
         offspring = []
+
+        # Si solo hay 1 item, no hay crossover posible
+        if n_items <= 1:
+            return [p.copy() for p in parents]
+
         for i in range(0, len(parents) - 1, 2):
             parent1 = parents[i]
             parent2 = parents[i + 1]
