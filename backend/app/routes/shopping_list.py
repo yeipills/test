@@ -86,6 +86,8 @@ async def quick_optimize(request: QuickOptimizeRequest):
     """
     # Convertir nombres a items de lista
     items = []
+    not_found = []
+
     for name in request.product_names:
         # Buscar el producto
         results = product_service.search_products(query=name)
@@ -99,9 +101,14 @@ async def quick_optimize(request: QuickOptimizeRequest):
                 priority=1,
             )
             items.append(item)
+        else:
+            not_found.append(name)
 
     if not items:
-        raise HTTPException(status_code=404, detail="No matching products found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No se encontraron productos. Productos buscados: {', '.join(request.product_names)}"
+        )
 
     shopping_list = ShoppingList(
         items=items,
@@ -113,7 +120,15 @@ async def quick_optimize(request: QuickOptimizeRequest):
     catalog = product_service.get_product_catalog()
     result = optimizer.optimize(shopping_list, catalog)
 
-    return result.dict()
+    # Agregar warnings por productos no encontrados
+    result_dict = result.dict()
+    if not_found:
+        result_dict["warnings"] = result_dict.get("warnings", []) + [
+            f"Producto '{name}' no encontrado en el catálogo" for name in not_found
+        ]
+        result_dict["items_not_found"] = result_dict.get("items_not_found", []) + not_found
+
+    return result_dict
 
 
 @router.post("/estimate")

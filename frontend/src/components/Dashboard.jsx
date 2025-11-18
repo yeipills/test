@@ -170,7 +170,7 @@ export default function Dashboard() {
       )}
 
       {/* Two Column Layout for Lists */}
-      <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+      <div className="wide-grid-2" style={{ marginBottom: '1rem' }}>
         {/* Top Sustainable - Compact */}
         <div className="card" style={{ marginBottom: 0 }}>
           <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

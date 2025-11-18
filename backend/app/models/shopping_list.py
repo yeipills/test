@@ -60,4 +60,8 @@ class OptimizedShoppingList(BaseModel):
     recommended_stores: List[str] = []
     estimated_shopping_time: Optional[int] = None  # minutes
 
+    # Warnings and feedback
+    warnings: List[str] = []
+    items_not_found: List[str] = []
+
     created_at: datetime = Field(default_factory=datetime.now)

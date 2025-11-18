@@ -6,6 +6,7 @@ export default function ProductSearch() {
   const [searchQuery, setSearchQuery] = useState('');
   const [barcode, setBarcode] = useState('');
   const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,12 +31,41 @@ export default function ProductSearch() {
     try {
       setLoading(true);
       const { data } = await productsAPI.getAll();
-      setProducts(data.products || []);
+      const prods = data.products || [];
+      setAllProducts(prods);
+      setProducts(prods);
     } catch (error) {
       console.error('Error loading products:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Filtrar en tiempo real
+  const handleQueryChange = (value) => {
+    setSearchQuery(value);
+    filterProducts(value, selectedCategory);
+  };
+
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+    filterProducts(searchQuery, value);
+  };
+
+  const filterProducts = (query, category) => {
+    let filtered = allProducts;
+
+    if (query) {
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+
+    if (category) {
+      filtered = filtered.filter(p => p.category === category);
+    }
+
+    setProducts(filtered);
   };
 
   const handleSearch = async () => {
@@ -99,15 +129,14 @@ export default function ProductSearch() {
             <input
               type="text"
               className="form-input"
-              placeholder="Ej: leche, pan, arroz..."
+              placeholder="Buscar producto..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              onChange={(e) => handleQueryChange(e.target.value)}
             />
             <select
               className="form-select"
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               style={{ maxWidth: '200px' }}
             >
               <option value="">Todas las categorías</option>
@@ -117,9 +146,6 @@ export default function ProductSearch() {
                 </option>
               ))}
             </select>
-            <button className="btn btn-primary" onClick={handleSearch}>
-              Buscar
-            </button>
           </div>
         </div>
 
@@ -151,7 +177,7 @@ export default function ProductSearch() {
           <div className="spinner"></div>
         </div>
       ) : (
-        <div className="grid grid-3">
+        <div className="wide-grid-4">
           {products.map((product) => (
             <div
               key={product.id}

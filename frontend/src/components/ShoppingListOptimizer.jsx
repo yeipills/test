@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { shoppingListAPI, productsAPI } from '../services/api';
 import { ShoppingCart, Plus, Trash2, Sparkles, DollarSign, Leaf } from 'lucide-react';
 
@@ -10,11 +10,24 @@ export default function ShoppingListOptimizer() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [templates, setTemplates] = useState(null);
+  const [allProducts, setAllProducts] = useState([]);
+  const [suggestions, setSuggestions] = useState({});
+  const [activeInput, setActiveInput] = useState(null);
 
   useEffect(() => {
     loadCategories();
     loadTemplates();
+    loadAllProducts();
   }, []);
+
+  const loadAllProducts = async () => {
+    try {
+      const { data } = await productsAPI.search({});
+      setAllProducts(data.results || []);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    }
+  };
 
   const loadCategories = async () => {
     try {
@@ -55,6 +68,32 @@ export default function ShoppingListOptimizer() {
     const newItems = [...items];
     newItems[index][field] = value;
     setItems(newItems);
+
+    // Show suggestions when typing product name
+    if (field === 'product_name' && value.length >= 2) {
+      const filtered = allProducts.filter(p =>
+        p.name.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 5);
+      setSuggestions({ ...suggestions, [index]: filtered });
+      setActiveInput(index);
+    } else if (field === 'product_name') {
+      setSuggestions({ ...suggestions, [index]: [] });
+    }
+  };
+
+  const selectProduct = (index, product) => {
+    const newItems = [...items];
+    newItems[index].product_name = product.name;
+    newItems[index].category = product.category;
+    newItems[index].product_id = product.id;
+    setItems(newItems);
+    setSuggestions({ ...suggestions, [index]: [] });
+    setActiveInput(null);
+  };
+
+  const closeSuggestions = () => {
+    setSuggestions({});
+    setActiveInput(null);
   };
 
   const loadTemplate = (templateKey) => {
@@ -96,11 +135,11 @@ export default function ShoppingListOptimizer() {
   };
 
   return (
-    <div>
+    <div className={`optimizer-layout ${result ? 'with-results' : ''}`}>
       <div className="card">
         <h2 className="card-title">
           <ShoppingCart size={24} style={{ display: 'inline', marginRight: '0.5rem' }} />
-          Optimizador de Lista de Compras
+          Lista de Compras
         </h2>
 
         {/* Templates */}
@@ -181,13 +220,53 @@ export default function ShoppingListOptimizer() {
                     borderRadius: '0.5rem',
                   }}
                 >
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Nombre del producto"
-                    value={item.product_name}
-                    onChange={(e) => updateItem(index, 'product_name', e.target.value)}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Buscar producto..."
+                      value={item.product_name}
+                      onChange={(e) => updateItem(index, 'product_name', e.target.value)}
+                      onBlur={() => setTimeout(closeSuggestions, 200)}
+                      autoComplete="off"
+                    />
+                    {suggestions[index] && suggestions[index].length > 0 && activeInput === index && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        background: 'white',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '0.5rem',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        zIndex: 1000,
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                      }}>
+                        {suggestions[index].map((product) => (
+                          <div
+                            key={product.id}
+                            onClick={() => selectProduct(index, product)}
+                            style={{
+                              padding: '0.75rem',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #f3f4f6',
+                              transition: 'background 0.15s',
+                            }}
+                            onMouseEnter={(e) => e.target.style.background = '#f0fdf4'}
+                            onMouseLeave={(e) => e.target.style.background = 'white'}
+                          >
+                            <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{product.name}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>{product.category}</span>
+                              <span style={{ color: '#10b981', fontWeight: 600 }}>${product.price}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   <select
                     className="form-select"
@@ -253,7 +332,7 @@ export default function ShoppingListOptimizer() {
           <h2 className="card-title">Resultado de la Optimización</h2>
 
           {/* Summary Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
             <div style={{ padding: '1rem', background: '#f0fdf4', borderRadius: '0.5rem' }}>
               <div style={{ fontSize: '0.875rem', color: '#065f46', marginBottom: '0.25rem' }}>
                 Costo Total

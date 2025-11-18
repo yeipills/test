@@ -1,16 +1,13 @@
 """
-ALGORITMO 2: Algoritmo de Mochila Multi-objetivo (Multi-objective Knapsack)
-Optimiza la selección de productos considerando múltiples objetivos simultáneamente:
-- Minimizar costo (restricción de presupuesto)
-- Maximizar sostenibilidad ambiental
-- Maximizar calidad nutricional
-- Maximizar satisfacción de preferencias del usuario
+ALGORITMO: Optimizador de Lista de Compras Multi-objetivo
 
-Implementación: Algoritmo genético con enfoque de Pareto-optimal
+Lógica correcta:
+1. Para cada item, encontrar productos candidatos
+2. Seleccionar la mejor variante según el objetivo (precio/sostenibilidad/salud)
+3. Si el costo excede el presupuesto, excluir items de baja prioridad
+4. Calcular ahorro real (costo sin optimizar vs optimizado)
 """
 
-import random
-import math
 from typing import List, Dict, Tuple, Optional
 from ..models.product import Product, SustainabilityScore
 from ..models.shopping_list import ShoppingListItem, ShoppingList, OptimizedProduct, OptimizedShoppingList
@@ -19,26 +16,11 @@ from .sustainability_scorer import SustainabilityScorer
 
 class MultiObjectiveKnapsackOptimizer:
     """
-    Optimizador de listas de compras usando algoritmo de mochila multi-objetivo
-
-    Este algoritmo balancea:
-    1. Restricción de presupuesto (constraint)
-    2. Maximización de sostenibilidad
-    3. Maximización de valor/calidad
-    4. Satisfacción de preferencias del usuario
+    Optimizador de listas de compras con restricción de presupuesto real
     """
 
-    def __init__(
-        self,
-        sustainability_scorer: Optional[SustainabilityScorer] = None,
-        population_size: int = 50,
-        generations: int = 100,
-        mutation_rate: float = 0.15,
-    ):
+    def __init__(self, sustainability_scorer: Optional[SustainabilityScorer] = None):
         self.scorer = sustainability_scorer or SustainabilityScorer()
-        self.population_size = population_size
-        self.generations = generations
-        self.mutation_rate = mutation_rate
 
     def optimize(
         self,
@@ -46,378 +28,244 @@ class MultiObjectiveKnapsackOptimizer:
         available_products: Dict[str, List[Product]],
     ) -> OptimizedShoppingList:
         """
-        Optimiza una lista de compras seleccionando los mejores productos
-
-        Args:
-            shopping_list: Lista de compras con items deseados
-            available_products: Dict de categoría -> lista de productos disponibles
-
-        Returns:
-            OptimizedShoppingList con productos seleccionados óptimamente
+        Optimiza una lista de compras respetando el presupuesto
         """
-        # Preparar datos
         items = shopping_list.items
         budget = shopping_list.budget or float('inf')
         optimize_for = shopping_list.optimize_for
 
-        # Configurar pesos según preferencia de optimización
-        weights = self._get_optimization_weights(optimize_for)
-
-        # Mapear items a productos candidatos
+        # Fase 1: Encontrar candidatos para cada item
         item_candidates: List[Tuple[ShoppingListItem, List[Product]]] = []
+        items_not_found = []
+        warnings = []
+
         for item in items:
             candidates = self._find_candidate_products(item, available_products)
             if candidates:
                 item_candidates.append((item, candidates))
+            else:
+                items_not_found.append(item.product_name)
+                warnings.append(f"No se encontraron productos para '{item.product_name}'")
 
         if not item_candidates:
-            return self._create_empty_result(shopping_list)
+            result = self._create_empty_result(shopping_list)
+            result.warnings = warnings
+            result.items_not_found = items_not_found
+            return result
 
-        # Ejecutar optimización genética
-        best_solution = self._genetic_algorithm(item_candidates, budget, weights)
+        # Fase 2: Seleccionar mejor variante para cada item
+        selections = []
+        for item, candidates in item_candidates:
+            best_product = self._select_best_product(item, candidates, optimize_for)
+            default_product = self._get_default_product(candidates)  # Para calcular ahorro
+            selections.append((item, candidates, best_product, default_product))
 
-        # Construir resultado optimizado
-        return self._build_optimized_result(
-            shopping_list, item_candidates, best_solution, budget, weights
-        )
+        # Fase 3: Ajustar al presupuesto (excluir items de baja prioridad)
+        if budget < float('inf'):
+            selections = self._fit_to_budget(selections, budget)
 
-    def _get_optimization_weights(self, optimize_for: str) -> Dict[str, float]:
-        """Define pesos según objetivo de optimización"""
-        weight_profiles = {
-            "price": {
-                "cost": 0.60,
-                "sustainability": 0.15,
-                "quality": 0.15,
-                "preference": 0.10,
-            },
-            "sustainability": {
-                "cost": 0.20,
-                "sustainability": 0.50,
-                "quality": 0.15,
-                "preference": 0.15,
-            },
-            "health": {
-                "cost": 0.20,
-                "sustainability": 0.15,
-                "quality": 0.50,
-                "preference": 0.15,
-            },
-            "balanced": {
-                "cost": 0.30,
-                "sustainability": 0.30,
-                "quality": 0.25,
-                "preference": 0.15,
-            },
-        }
-        return weight_profiles.get(optimize_for, weight_profiles["balanced"])
+        # Fase 4: Construir resultado
+        result = self._build_result(shopping_list, selections, budget)
+        result.warnings = warnings
+        result.items_not_found = items_not_found
+
+        return result
 
     def _find_candidate_products(
         self, item: ShoppingListItem, available_products: Dict[str, List[Product]]
     ) -> List[Product]:
-        """Encuentra productos candidatos para un item de la lista"""
+        """Encuentra productos candidatos que coincidan con el item"""
         candidates = []
+        name_matches = []
+        search_name = (item.product_name or "").lower().strip()
 
-        # Buscar en la categoría correspondiente
         category_products = available_products.get(item.category, [])
 
         for product in category_products:
-            # Filtrar por precio máximo si está especificado
+            # Filtrar por precio máximo
             if item.max_price and product.price > item.max_price:
                 continue
 
-            # Filtrar por preferencias (ej: organic, local)
-            if item.preferences:
-                if not self._matches_preferences(product, item.preferences):
-                    continue
+            # Filtrar por preferencias
+            if item.preferences and not self._matches_preferences(product, item.preferences):
+                continue
 
-            candidates.append(product)
+            # Priorizar por coincidencia de nombre
+            if search_name:
+                product_name_lower = product.name.lower()
+                if search_name in product_name_lower or product_name_lower in search_name:
+                    name_matches.append(product)
+                else:
+                    candidates.append(product)
+            else:
+                candidates.append(product)
 
-        # Ordenar por score de sostenibilidad inicial
-        candidates.sort(
-            key=lambda p: self.scorer.calculate_score(p).overall_score, reverse=True
-        )
-
-        return candidates[:20]  # Limitar a top 20 candidatos por item
+        # Priorizar matches por nombre
+        return name_matches + candidates if name_matches else candidates
 
     def _matches_preferences(self, product: Product, preferences: List[str]) -> bool:
         """Verifica si un producto cumple con las preferencias"""
         if not preferences:
             return True
-
         product_labels = [label.lower() for label in (product.labels or [])]
-
-        # Al menos 50% de las preferencias deben cumplirse
         matches = sum(1 for pref in preferences if pref.lower() in product_labels)
         return matches >= len(preferences) * 0.5
 
-    def _genetic_algorithm(
-        self,
-        item_candidates: List[Tuple[ShoppingListItem, List[Product]]],
-        budget: float,
-        weights: Dict[str, float],
-    ) -> List[int]:
-        """
-        Algoritmo genético para optimización multi-objetivo
+    def _select_best_product(
+        self, item: ShoppingListItem, candidates: List[Product], optimize_for: str
+    ) -> Product:
+        """Selecciona el mejor producto según el objetivo de optimización"""
+        if not candidates:
+            return None
 
-        Returns:
-            Lista de índices de productos seleccionados (uno por item)
-        """
-        n_items = len(item_candidates)
+        if optimize_for == "price":
+            # Menor precio
+            return min(candidates, key=lambda p: p.price)
 
-        # Inicializar población
-        population = self._initialize_population(n_items, item_candidates)
+        elif optimize_for == "sustainability":
+            # Mayor score de sostenibilidad
+            return max(candidates, key=lambda p: self.scorer.calculate_score(p).overall_score)
 
-        # Evolucionar
-        for generation in range(self.generations):
-            # Evaluar fitness
-            fitness_scores = [
-                self._evaluate_fitness(individual, item_candidates, budget, weights)
-                for individual in population
-            ]
+        elif optimize_for == "health":
+            # Mayor score de salud
+            return max(candidates, key=lambda p: self.scorer.calculate_score(p).health_score)
 
-            # Selección (torneo)
-            parents = self._tournament_selection(population, fitness_scores)
-
-            # Crossover
-            offspring = self._crossover(parents, n_items)
-
-            # Mutación
-            offspring = self._mutate(offspring, item_candidates)
-
-            # Nueva generación (elitismo: mantener mejores)
-            population = self._next_generation(population, offspring, fitness_scores)
-
-        # Retornar mejor solución
-        final_fitness = [
-            self._evaluate_fitness(ind, item_candidates, budget, weights)
-            for ind in population
-        ]
-        best_idx = max(range(len(final_fitness)), key=lambda i: final_fitness[i])
-        return population[best_idx]
-
-    def _initialize_population(
-        self, n_items: int, item_candidates: List[Tuple[ShoppingListItem, List[Product]]]
-    ) -> List[List[int]]:
-        """Inicializa población con soluciones aleatorias válidas"""
-        population = []
-        for _ in range(self.population_size):
-            individual = []
-            for item, candidates in item_candidates:
-                # Seleccionar producto aleatorio de candidatos
-                if candidates:
-                    individual.append(random.randint(0, len(candidates) - 1))
+        else:  # balanced
+            # Score combinado: precio + sostenibilidad
+            def balanced_score(p):
+                sus = self.scorer.calculate_score(p)
+                # Normalizar precio (inverso, menor es mejor)
+                max_price = max(c.price for c in candidates)
+                min_price = min(c.price for c in candidates)
+                if max_price == min_price:
+                    price_score = 100
                 else:
-                    individual.append(0)
-            population.append(individual)
-        return population
+                    price_score = 100 * (1 - (p.price - min_price) / (max_price - min_price))
+                # Combinar 40% precio + 40% sostenibilidad + 20% salud
+                return 0.4 * price_score + 0.4 * sus.overall_score + 0.2 * sus.health_score
 
-    def _evaluate_fitness(
+            return max(candidates, key=balanced_score)
+
+    def _get_default_product(self, candidates: List[Product]) -> Product:
+        """Obtiene el producto por defecto (primero/más común) para calcular ahorro"""
+        if not candidates:
+            return None
+        # El primero es el que más coincide con el nombre buscado
+        return candidates[0]
+
+    def _fit_to_budget(
         self,
-        individual: List[int],
-        item_candidates: List[Tuple[ShoppingListItem, List[Product]]],
-        budget: float,
-        weights: Dict[str, float],
-    ) -> float:
+        selections: List[Tuple[ShoppingListItem, List[Product], Product, Product]],
+        budget: float
+    ) -> List[Tuple[ShoppingListItem, List[Product], Product, Product]]:
         """
-        Evalúa la fitness de una solución considerando múltiples objetivos
-
-        Fitness = w1*cost_score + w2*sustainability + w3*quality + w4*preference
+        Ajusta la selección al presupuesto usando algoritmo greedy.
+        Primero intenta variantes más baratas, luego excluye items.
         """
-        total_cost = 0
-        total_sustainability = 0
-        total_quality = 0
-        total_preference = 0
-        count = 0
-
-        for i, (item, candidates) in enumerate(item_candidates):
-            if i >= len(individual) or not candidates:
-                continue
-
-            product_idx = individual[i]
-            if product_idx >= len(candidates):
-                continue
-
-            product = candidates[product_idx]
-            total_cost += product.price * item.quantity
-
-            # Sustainability score
-            sus_score = self.scorer.calculate_score(product)
-            total_sustainability += sus_score.overall_score
-
-            # Quality score (health + economic value)
-            total_quality += (sus_score.health_score + sus_score.economic_score) / 2
-
-            # Preference match score
-            pref_score = self._calculate_preference_score(product, item.preferences)
-            total_preference += pref_score
-
-            count += 1
-
-        if count == 0:
-            return 0
-
-        # Normalizar scores
-        avg_sustainability = total_sustainability / count
-        avg_quality = total_quality / count
-        avg_preference = total_preference / count
-
-        # Cost score (penalización si excede presupuesto)
-        if budget < float('inf'):
-            if total_cost <= budget:
-                cost_score = 100 * (1 - total_cost / budget)  # Mejor si usa menos presupuesto
+        # Paso 1: Usar variantes más baratas para todos los items
+        cheap_selections = []
+        for item, candidates, best, default in selections:
+            if candidates:
+                cheapest = min(candidates, key=lambda p: p.price)
+                cheap_selections.append((item, candidates, cheapest, default))
             else:
-                # Penalización severa por exceder presupuesto
-                excess_ratio = total_cost / budget - 1
-                cost_score = -100 * excess_ratio
-        else:
-            # Sin restricción de presupuesto, preferir menor costo
-            cost_score = 100 / (1 + total_cost / 10000)
+                cheap_selections.append((item, candidates, best, default))
 
-        # Fitness ponderada
-        fitness = (
-            weights["cost"] * cost_score
-            + weights["sustainability"] * avg_sustainability
-            + weights["quality"] * avg_quality
-            + weights["preference"] * avg_preference
+        # Calcular costo con variantes baratas
+        total_cost = sum(sel[2].price * sel[0].quantity for sel in cheap_selections if sel[2])
+
+        if total_cost <= budget:
+            # Cabe todo con variantes baratas, ahora optimizar según objetivo original
+            return selections if sum(s[2].price * s[0].quantity for s in selections if s[2]) <= budget else cheap_selections
+
+        # Paso 2: Ordenar por prioridad y costo (excluir opcionales caros primero)
+        sorted_selections = sorted(
+            cheap_selections,
+            key=lambda s: (-s[0].priority, s[2].price * s[0].quantity if s[2] else 0)
         )
 
-        return fitness
+        # Paso 3: Incluir items hasta llenar presupuesto (knapsack greedy)
+        included = []
+        current_cost = 0
 
-    def _calculate_preference_score(
-        self, product: Product, preferences: Optional[List[str]]
-    ) -> float:
-        """Calcula qué tan bien un producto cumple las preferencias"""
-        if not preferences:
-            return 50.0  # Neutral
+        # Ordenar por valor (prioridad) / peso (costo) - ratio de eficiencia
+        def efficiency_ratio(sel):
+            item, _, product, _ = sel
+            if not product:
+                return 0
+            cost = product.price * item.quantity
+            if cost == 0:
+                return float('inf')
+            # Mayor prioridad (menor número) = más valor
+            value = 6 - item.priority  # Convertir 1-5 a 5-1
+            return value / cost
 
-        product_labels = [label.lower() for label in (product.labels or [])]
-        matches = sum(1 for pref in preferences if pref.lower() in product_labels)
+        sorted_by_efficiency = sorted(cheap_selections, key=efficiency_ratio, reverse=True)
 
-        return (matches / len(preferences)) * 100
+        for sel in sorted_by_efficiency:
+            item, candidates, product, default = sel
+            if product:
+                item_cost = product.price * item.quantity
+                if current_cost + item_cost <= budget:
+                    current_cost += item_cost
+                    included.append(sel)
 
-    def _tournament_selection(
-        self, population: List[List[int]], fitness_scores: List[float], tournament_size: int = 3
-    ) -> List[List[int]]:
-        """Selección por torneo"""
-        parents = []
-        for _ in range(len(population)):
-            # Seleccionar candidatos aleatorios
-            tournament_indices = random.sample(range(len(population)), tournament_size)
-            # Elegir el mejor
-            winner_idx = max(tournament_indices, key=lambda i: fitness_scores[i])
-            parents.append(population[winner_idx].copy())
-        return parents
+        return included
 
-    def _crossover(self, parents: List[List[int]], n_items: int) -> List[List[int]]:
-        """Crossover de un punto"""
-        offspring = []
+    def _optimize_essentials_for_budget(
+        self,
+        essential_selections: List[Tuple[ShoppingListItem, List[Product], Product, Product]],
+        budget: float
+    ) -> List[Tuple[ShoppingListItem, List[Product], Product, Product]]:
+        """
+        Si los esenciales exceden el presupuesto, elegir las variantes más baratas
+        """
+        optimized = []
+        for item, candidates, best, default in essential_selections:
+            # Elegir el más barato
+            cheapest = min(candidates, key=lambda p: p.price) if candidates else best
+            optimized.append((item, candidates, cheapest, default))
+        return optimized
 
-        # Si solo hay 1 item, no hay crossover posible
-        if n_items <= 1:
-            return [p.copy() for p in parents]
-
-        for i in range(0, len(parents) - 1, 2):
-            parent1 = parents[i]
-            parent2 = parents[i + 1]
-
-            # Punto de crossover
-            point = random.randint(1, n_items - 1)
-
-            # Crear hijos
-            child1 = parent1[:point] + parent2[point:]
-            child2 = parent2[:point] + parent1[point:]
-
-            offspring.extend([child1, child2])
-
-        return offspring
-
-    def _mutate(
-        self, offspring: List[List[int]], item_candidates: List[Tuple[ShoppingListItem, List[Product]]]
-    ) -> List[List[int]]:
-        """Mutación: cambiar producto seleccionado aleatoriamente"""
-        for individual in offspring:
-            if random.random() < self.mutation_rate:
-                # Mutar un gen aleatorio
-                gene_idx = random.randint(0, len(individual) - 1)
-                if gene_idx < len(item_candidates):
-                    _, candidates = item_candidates[gene_idx]
-                    if candidates:
-                        individual[gene_idx] = random.randint(0, len(candidates) - 1)
-        return offspring
-
-    def _next_generation(
-        self, population: List[List[int]], offspring: List[List[int]], fitness_scores: List[float]
-    ) -> List[List[int]]:
-        """Crear nueva generación con elitismo"""
-        # Combinar población actual y offspring
-        combined = population + offspring
-
-        # Calcular fitness de offspring
-        # (asumimos que fitness_scores es solo de population)
-        # Por simplicidad, mantener top population_size
-
-        # Ordenar por fitness y mantener los mejores
-        sorted_indices = sorted(
-            range(len(population)), key=lambda i: fitness_scores[i], reverse=True
-        )
-
-        # Mantener top 20% de élite
-        elite_size = max(1, self.population_size // 5)
-        new_population = [population[i] for i in sorted_indices[:elite_size]]
-
-        # Completar con offspring
-        new_population.extend(offspring[: self.population_size - elite_size])
-
-        return new_population[: self.population_size]
-
-    def _build_optimized_result(
+    def _build_result(
         self,
         shopping_list: ShoppingList,
-        item_candidates: List[Tuple[ShoppingListItem, List[Product]]],
-        solution: List[int],
-        budget: float,
-        weights: Dict[str, float],
+        selections: List[Tuple[ShoppingListItem, List[Product], Product, Product]],
+        budget: float
     ) -> OptimizedShoppingList:
-        """Construye el resultado optimizado"""
+        """Construye el resultado de la optimización"""
         optimized_items = []
         total_cost = 0
+        total_cost_without_optimization = 0
         total_carbon = 0
         total_water = 0
         recyclable_count = 0
-        items_substituted = 0
-
         sustainability_scores = []
 
-        for i, (item, candidates) in enumerate(item_candidates):
-            if i >= len(solution) or not candidates:
+        for item, candidates, selected, default in selections:
+            if not selected:
                 continue
 
-            product_idx = solution[i]
-            if product_idx >= len(candidates):
-                continue
+            sus_score = self.scorer.calculate_score(selected)
+            sustainability_scores.append(sus_score)
 
-            selected_product = candidates[product_idx]
-            sus_score = self.scorer.calculate_score(selected_product)
+            # Calcular ahorro real (comparado con el producto por defecto)
+            default_price = default.price if default else selected.price
+            savings = max(0, (default_price - selected.price) * item.quantity)
 
-            # Calcular alternativas (top 3 diferentes)
-            alternatives = [c for j, c in enumerate(candidates[:5]) if j != product_idx]
+            # Costo sin optimización (producto por defecto)
+            total_cost_without_optimization += default_price * item.quantity
 
-            # Determinar si fue sustituido
-            was_substituted = item.product_id and item.product_id != selected_product.id
-            if was_substituted:
-                items_substituted += 1
+            # Alternativas (otros productos disponibles)
+            alternatives = [c for c in candidates[:4] if c.id != selected.id]
 
             # Razón de selección
-            reason = self._generate_selection_reason(selected_product, sus_score, weights)
-
-            # Calcular ahorros (comparado con el más caro de categoría)
-            max_price = max(c.price for c in candidates) if candidates else selected_product.price
-            savings = (max_price - selected_product.price) * item.quantity
+            reason = self._generate_reason(selected, sus_score, shopping_list.optimize_for)
 
             optimized_items.append(
                 OptimizedProduct(
                     original_item=item,
-                    selected_product=selected_product,
+                    selected_product=selected,
                     alternatives=alternatives[:3],
                     reason=reason,
                     savings=round(savings, 2),
@@ -426,9 +274,7 @@ class MultiObjectiveKnapsackOptimizer:
             )
 
             # Acumular métricas
-            total_cost += selected_product.price * item.quantity
-            sustainability_scores.append(sus_score)
-
+            total_cost += selected.price * item.quantity
             if sus_score.carbon_footprint_kg:
                 total_carbon += sus_score.carbon_footprint_kg * item.quantity
             if sus_score.water_usage_liters:
@@ -436,40 +282,38 @@ class MultiObjectiveKnapsackOptimizer:
             if sus_score.packaging_recyclable:
                 recyclable_count += 1
 
-        # Calcular métricas agregadas
+        # Calcular sostenibilidad promedio
         if sustainability_scores:
-            avg_scores = {
-                "economic_score": sum(s.economic_score for s in sustainability_scores) / len(sustainability_scores),
-                "environmental_score": sum(s.environmental_score for s in sustainability_scores) / len(sustainability_scores),
-                "social_score": sum(s.social_score for s in sustainability_scores) / len(sustainability_scores),
-                "health_score": sum(s.health_score for s in sustainability_scores) / len(sustainability_scores),
-                "overall_score": sum(s.overall_score for s in sustainability_scores) / len(sustainability_scores),
-            }
-            overall_sustainability = SustainabilityScore(**avg_scores)
+            overall_sustainability = SustainabilityScore(
+                economic_score=sum(s.economic_score for s in sustainability_scores) / len(sustainability_scores),
+                environmental_score=sum(s.environmental_score for s in sustainability_scores) / len(sustainability_scores),
+                social_score=sum(s.social_score for s in sustainability_scores) / len(sustainability_scores),
+                health_score=sum(s.health_score for s in sustainability_scores) / len(sustainability_scores),
+                overall_score=sum(s.overall_score for s in sustainability_scores) / len(sustainability_scores),
+            )
         else:
             overall_sustainability = SustainabilityScore(
                 economic_score=0, environmental_score=0, social_score=0, health_score=0, overall_score=0
             )
 
-        # Calcular ahorros totales
-        estimated_savings = sum(item.savings for item in optimized_items)
+        # Ahorro total real
+        total_savings = max(0, total_cost_without_optimization - total_cost)
 
-        # Budget utilizado
+        # Presupuesto usado
         budget_used = (total_cost / budget * 100) if budget < float('inf') else 0
 
-        # Tiendas recomendadas (agrupar por disponibilidad)
+        # Tiendas recomendadas
         store_counts = {}
         for opt_item in optimized_items:
             store = opt_item.selected_product.store or "Tienda General"
             store_counts[store] = store_counts.get(store, 0) + 1
-
         recommended_stores = sorted(store_counts.keys(), key=lambda s: store_counts[s], reverse=True)
 
         return OptimizedShoppingList(
             original_list=shopping_list,
             optimized_items=optimized_items,
             total_cost=round(total_cost, 2),
-            estimated_savings=round(estimated_savings, 2),
+            estimated_savings=round(total_savings, 2),
             budget_used_percentage=round(budget_used, 2),
             overall_sustainability=overall_sustainability,
             total_carbon_footprint=round(total_carbon, 2),
@@ -477,36 +321,28 @@ class MultiObjectiveKnapsackOptimizer:
             recyclable_percentage=round(
                 (recyclable_count / len(optimized_items) * 100) if optimized_items else 0, 2
             ),
-            optimization_algorithm="Multi-Objective Genetic Algorithm",
+            optimization_algorithm="Smart Budget Optimizer",
             constraints_met=total_cost <= budget if budget < float('inf') else True,
-            items_substituted=items_substituted,
+            items_substituted=0,
             optimization_score=round(overall_sustainability.overall_score, 2),
             recommended_stores=recommended_stores[:3],
             estimated_shopping_time=len(recommended_stores) * 15 + len(optimized_items) * 2,
         )
 
-    def _generate_selection_reason(
-        self, product: Product, sus_score: SustainabilityScore, weights: Dict[str, float]
-    ) -> str:
-        """Genera una razón clara de por qué se seleccionó este producto"""
-        reasons = []
-
-        if sus_score.overall_score >= 80:
-            reasons.append("Excelente balance sostenibilidad-precio")
-        elif sus_score.overall_score >= 60:
-            reasons.append("Buena opción balanceada")
-
-        if sus_score.environmental_score >= 75:
-            reasons.append("bajo impacto ambiental")
-        if sus_score.health_score >= 75:
-            reasons.append("alta calidad nutricional")
-        if sus_score.economic_score >= 75:
-            reasons.append("excelente precio")
-
-        if not reasons:
-            reasons.append("Mejor opción disponible")
-
-        return ", ".join(reasons).capitalize()
+    def _generate_reason(self, product: Product, sus_score: SustainabilityScore, optimize_for: str) -> str:
+        """Genera razón clara de la selección"""
+        if optimize_for == "price":
+            return "Mejor precio disponible"
+        elif optimize_for == "sustainability":
+            if sus_score.overall_score >= 70:
+                return "Alta sostenibilidad ambiental y social"
+            return "Mejor opción sostenible disponible"
+        elif optimize_for == "health":
+            if sus_score.health_score >= 70:
+                return "Excelente perfil nutricional"
+            return "Mejor opción saludable disponible"
+        else:
+            return "Mejor balance precio-sostenibilidad-salud"
 
     def _get_impact_level(self, score: float) -> str:
         """Convierte score a nivel de impacto"""
@@ -514,11 +350,10 @@ class MultiObjectiveKnapsackOptimizer:
             return "low"
         elif score >= 50:
             return "medium"
-        else:
-            return "high"
+        return "high"
 
     def _create_empty_result(self, shopping_list: ShoppingList) -> OptimizedShoppingList:
-        """Crea resultado vacío cuando no hay productos disponibles"""
+        """Crea resultado vacío"""
         return OptimizedShoppingList(
             original_list=shopping_list,
             optimized_items=[],
@@ -526,13 +361,9 @@ class MultiObjectiveKnapsackOptimizer:
             estimated_savings=0,
             budget_used_percentage=0,
             overall_sustainability=SustainabilityScore(
-                economic_score=0,
-                environmental_score=0,
-                social_score=0,
-                health_score=0,
-                overall_score=0,
+                economic_score=0, environmental_score=0, social_score=0, health_score=0, overall_score=0
             ),
-            optimization_algorithm="Multi-Objective Genetic Algorithm",
+            optimization_algorithm="Smart Budget Optimizer",
             constraints_met=True,
             optimization_score=0,
         )

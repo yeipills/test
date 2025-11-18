@@ -83,7 +83,7 @@ export default function ProductComparator() {
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="wide-grid-4" style={{ marginBottom: '1rem' }}>
               {selectedProducts.map((product) => (
                 <div
                   key={product.id}
@@ -146,7 +146,7 @@ export default function ProductComparator() {
           <h2 className="card-title">Resultado de la Comparación</h2>
 
           {/* Winners */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div className="wide-grid-3" style={{ marginBottom: '1.5rem' }}>
             <div style={{ padding: '1rem', background: '#f0fdf4', borderRadius: '0.5rem', border: '2px solid #10b981' }}>
               <div style={{ fontSize: '0.875rem', color: '#065f46', marginBottom: '0.5rem', fontWeight: '600' }}>
                 Mejor Precio
@@ -351,8 +351,8 @@ export default function ProductComparator() {
           />
         </div>
 
-        <div className="grid grid-3">
-          {filteredProducts.slice(0, 12).map((product) => (
+        <div className="wide-grid-4">
+          {filteredProducts.slice(0, 16).map((product) => (
             <div
               key={product.id}
               className="product-card"

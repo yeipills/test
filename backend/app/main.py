@@ -59,7 +59,7 @@ app = FastAPI(
     ### Integraciones Externas:
     - Open Food Facts API (información nutricional)
     - Carbon Footprint estimation
-    - OpenStreetMap (geolocalización)
+    - Google Maps API (geolocalización y tiendas)
 
     ## Uso de IA en el Desarrollo
 
@@ -134,6 +134,7 @@ async def root():
 async def health_check():
     """Health check endpoint with service status"""
     from .database import SessionLocal
+    from sqlalchemy import text
 
     health = {
         "status": "healthy",
@@ -148,7 +149,7 @@ async def health_check():
     # Check database
     try:
         db = SessionLocal()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db.close()
         health["components"]["database"] = "up"
     except Exception as e:
@@ -163,6 +164,33 @@ async def health_check():
         health["status"] = "degraded"
 
     return health
+
+
+@app.get("/api/stores/nearby")
+async def get_nearby_stores(lat: float, lng: float, radius: float = 5.0):
+    """Busca tiendas cercanas usando Google Maps API"""
+    from .services.external_api_service import ExternalAPIService
+
+    api_service = ExternalAPIService()
+    stores = await api_service.find_nearby_stores(lat, lng, radius)
+
+    return {
+        "stores": [
+            {
+                "id": i + 1,
+                "name": store.get("name", "Unknown"),
+                "address": store.get("address", ""),
+                "lat": lat + (i * 0.01),  # Approximate position
+                "lng": lng + (i * 0.01),
+                "distance": store.get("distance_km", 0),
+                "rating": store.get("rating", 0),
+                "hasOrganic": True,
+                "hasLocal": True,
+            }
+            for i, store in enumerate(stores)
+        ],
+        "total": len(stores),
+    }
 
 
 @app.get("/api/stats")

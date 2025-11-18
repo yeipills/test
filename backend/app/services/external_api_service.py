@@ -2,10 +2,11 @@
 Servicio para integración con APIs externas
 - Open Food Facts API
 - Carbon Footprint API (simulado)
-- OpenStreetMap Nominatim
+- Google Maps API
 """
 
 import aiohttp
+import os
 from typing import Optional, Dict, List
 import asyncio
 
@@ -15,7 +16,8 @@ class ExternalAPIService:
 
     def __init__(self):
         self.open_food_facts_url = "https://world.openfoodfacts.org/api/v2"
-        self.nominatim_url = "https://nominatim.openstreetmap.org"
+        self.google_maps_api_key = os.getenv("GOOGLE_MAPS_API_KEY", "")
+        self.google_maps_url = "https://maps.googleapis.com/maps/api"
 
     async def fetch_product_from_barcode(self, barcode: str) -> Optional[Dict]:
         """
@@ -155,7 +157,7 @@ class ExternalAPIService:
 
     async def geocode_address(self, address: str) -> Optional[Dict]:
         """
-        Geocodifica una dirección usando Nominatim de OpenStreetMap
+        Geocodifica una dirección usando Google Maps Geocoding API
 
         Args:
             address: Dirección a geocodificar
@@ -163,31 +165,31 @@ class ExternalAPIService:
         Returns:
             Dict con coordenadas y detalles o None
         """
-        url = f"{self.nominatim_url}/search"
-        params = {
-            "q": address,
-            "format": "json",
-            "limit": 1,
-        }
+        if not self.google_maps_api_key:
+            print("Google Maps API key not configured")
+            return None
 
-        headers = {
-            "User-Agent": "LiquiVerde-SmartRetail/1.0"  # Nominatim requiere User-Agent
+        url = f"{self.google_maps_url}/geocode/json"
+        params = {
+            "address": address,
+            "key": self.google_maps_api_key,
         }
 
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    url, params=params, headers=headers, timeout=aiohttp.ClientTimeout(total=5)
+                    url, params=params, timeout=aiohttp.ClientTimeout(total=5)
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
-                        if data:
-                            result = data[0]
+                        if data.get("status") == "OK" and data.get("results"):
+                            result = data["results"][0]
+                            location = result["geometry"]["location"]
                             return {
-                                "latitude": float(result.get("lat", 0)),
-                                "longitude": float(result.get("lon", 0)),
-                                "display_name": result.get("display_name", ""),
-                                "address": result.get("address", {}),
+                                "latitude": location["lat"],
+                                "longitude": location["lng"],
+                                "display_name": result.get("formatted_address", ""),
+                                "place_id": result.get("place_id", ""),
                             }
         except Exception as e:
             print(f"Error geocoding address: {e}")
@@ -198,36 +200,67 @@ class ExternalAPIService:
         self, latitude: float, longitude: float, radius_km: float = 5.0
     ) -> List[Dict]:
         """
-        Busca tiendas cercanas usando Overpass API de OpenStreetMap
+        Busca tiendas cercanas usando Google Places API
 
         Returns:
             Lista de tiendas cercanas
         """
-        # Simulación - en producción usaría Overpass API
-        mock_stores = [
-            {
-                "name": "Supermercado Líder",
-                "distance_km": 1.2,
-                "address": "Av. Providencia 1234, Providencia",
-                "type": "supermarket",
-            },
-            {
-                "name": "Supermercado Jumbo",
-                "distance_km": 2.5,
-                "address": "Av. Apoquindo 4567, Las Condes",
-                "type": "supermarket",
-            },
-            {
-                "name": "Supermercado Santa Isabel",
-                "distance_km": 0.8,
-                "address": "Av. Vicuña Mackenna 890, Ñuñoa",
-                "type": "supermarket",
-            },
-        ]
+        if not self.google_maps_api_key:
+            print("Google Maps API key not configured - cannot search nearby stores")
+            return []
 
-        # Filtrar por radio
-        nearby = [s for s in mock_stores if s["distance_km"] <= radius_km]
-        return sorted(nearby, key=lambda x: x["distance_km"])
+        url = f"{self.google_maps_url}/place/nearbysearch/json"
+        params = {
+            "location": f"{latitude},{longitude}",
+            "radius": int(radius_km * 1000),  # Convert to meters
+            "type": "supermarket",
+            "key": self.google_maps_api_key,
+        }
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    url, params=params, timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if data.get("status") == "OK":
+                            stores = []
+                            for place in data.get("results", []):
+                                store_location = place["geometry"]["location"]
+                                # Calculate approximate distance
+                                distance = self._calculate_distance(
+                                    latitude, longitude,
+                                    store_location["lat"], store_location["lng"]
+                                )
+                                stores.append({
+                                    "name": place.get("name", "Unknown"),
+                                    "distance_km": round(distance, 2),
+                                    "address": place.get("vicinity", ""),
+                                    "type": "supermarket",
+                                    "place_id": place.get("place_id", ""),
+                                    "rating": place.get("rating", 0),
+                                })
+                            return sorted(stores, key=lambda x: x["distance_km"])
+        except Exception as e:
+            print(f"Error finding nearby stores: {e}")
+
+        return []
+
+    def _calculate_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        """Calculate distance between two points using Haversine formula"""
+        import math
+        R = 6371  # Earth's radius in km
+
+        lat1_rad = math.radians(lat1)
+        lat2_rad = math.radians(lat2)
+        delta_lat = math.radians(lat2 - lat1)
+        delta_lon = math.radians(lon2 - lon1)
+
+        a = math.sin(delta_lat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon/2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+        return R * c
 
     def calculate_water_usage(self, product_category: str, weight_kg: float = 1.0) -> float:
         """

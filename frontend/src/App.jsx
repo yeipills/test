@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Leaf, Search, ShoppingCart, BarChart3, TrendingUp, MapPin } from 'lucide-react';
+import { Leaf, Search, ShoppingCart, BarChart3, TrendingUp, MapPin, Zap } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import ProductSearch from './components/ProductSearch';
 import ShoppingListOptimizer from './components/ShoppingListOptimizer';
@@ -8,22 +8,23 @@ import StoreMap from './components/StoreMap';
 import './styles/App.css';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Optimizador como página principal
+  const [activeTab, setActiveTab] = useState('optimizer');
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'search':
-        return <ProductSearch />;
       case 'optimizer':
         return <ShoppingListOptimizer />;
+      case 'search':
+        return <ProductSearch />;
       case 'compare':
         return <ProductComparator />;
+      case 'dashboard':
+        return <Dashboard />;
       case 'stores':
         return <StoreMap />;
       default:
-        return <Dashboard />;
+        return <ShoppingListOptimizer />;
     }
   };
 
@@ -32,19 +33,22 @@ function App() {
       {/* Header */}
       <header className="header">
         <div className="header-content">
-          <div className="logo">
+          <div className="logo" onClick={() => setActiveTab('optimizer')} style={{ cursor: 'pointer' }}>
             <Leaf size={32} />
             <span>LiquiVerde</span>
           </div>
 
           <nav className="nav">
+            {/* Optimizador destacado como principal */}
             <button
-              className={`nav-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
+              className={`nav-btn nav-btn-primary ${activeTab === 'optimizer' ? 'active' : ''}`}
+              onClick={() => setActiveTab('optimizer')}
             >
-              <TrendingUp size={16} />
-              Dashboard
+              <Zap size={16} />
+              Optimizar
             </button>
+
+            {/* Flujo: Buscar → Comparar → Ver stats → Tiendas */}
             <button
               className={`nav-btn ${activeTab === 'search' ? 'active' : ''}`}
               onClick={() => setActiveTab('search')}
@@ -53,18 +57,18 @@ function App() {
               Productos
             </button>
             <button
-              className={`nav-btn ${activeTab === 'optimizer' ? 'active' : ''}`}
-              onClick={() => setActiveTab('optimizer')}
-            >
-              <ShoppingCart size={16} />
-              Optimizador
-            </button>
-            <button
               className={`nav-btn ${activeTab === 'compare' ? 'active' : ''}`}
               onClick={() => setActiveTab('compare')}
             >
               <BarChart3 size={16} />
               Comparar
+            </button>
+            <button
+              className={`nav-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+              onClick={() => setActiveTab('dashboard')}
+            >
+              <TrendingUp size={16} />
+              Stats
             </button>
             <button
               className={`nav-btn ${activeTab === 'stores' ? 'active' : ''}`}
@@ -80,18 +84,16 @@ function App() {
       {/* Main Content */}
       <main className="container">{renderContent()}</main>
 
-      {/* Footer */}
-      <footer style={{ padding: '1.5rem 1rem', textAlign: 'center', color: '#6b7280', borderTop: '1px solid #e5e7eb' }}>
-        <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-          <strong>LiquiVerde Smart Retail Platform</strong>
-          <span style={{ display: 'block', marginTop: '0.25rem' }}>Grupo Lagos</span>
-        </div>
-        <div style={{ fontSize: '0.8rem', lineHeight: '1.4' }}>
-          Plataforma de compras inteligentes
-        </div>
-        <div style={{ fontSize: '0.7rem', marginTop: '0.5rem', opacity: 0.8 }}>
-          Mochila Multi-objetivo | Scoring | Sustitución
-        </div>
+      {/* Footer simplificado */}
+      <footer style={{
+        padding: '1rem',
+        textAlign: 'center',
+        color: '#6b7280',
+        borderTop: '1px solid #e5e7eb',
+        fontSize: '0.8rem'
+      }}>
+        <strong>LiquiVerde</strong> · Grupo Lagos ·
+        <span style={{ opacity: 0.7 }}> Optimización inteligente de compras</span>
       </footer>
     </div>
   );

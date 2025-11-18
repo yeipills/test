@@ -685,7 +685,7 @@ La IA fue utilizada como un copiloto avanzado, NO como autor principal del códi
 ### 5. Integración con APIs Externas ✅
 - **Open Food Facts API:** Búsqueda de productos por código de barras
 - **Carbon Footprint:** Estimación de huella de carbono
-- **OpenStreetMap:** Geocodificación y búsqueda de tiendas
+- **Google Maps API:** Geocodificación y búsqueda de tiendas cercanas
 
 ### 6. Algoritmos Adicionales 🎯
 - **Sistema de Scoring Multi-dimensional:** Implementado completamente

@@ -1,70 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { MapPin, Navigation, Store, Clock, Phone, AlertCircle } from 'lucide-react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
-
-// Mock stores data - In production this would come from the API
-const MOCK_STORES = [
-  {
-    id: 1,
-    name: 'Jumbo Kennedy',
-    address: 'Av. Kennedy 9001, Las Condes',
-    lat: -33.3997,
-    lng: -70.5783,
-    hours: '8:00 - 22:00',
-    phone: '+56 2 2200 1000',
-    distance: 1.2,
-    hasOrganic: true,
-    hasLocal: true,
-  },
-  {
-    id: 2,
-    name: 'Lider Providencia',
-    address: 'Av. Providencia 2124, Providencia',
-    lat: -33.4255,
-    lng: -70.6104,
-    hours: '8:00 - 23:00',
-    phone: '+56 2 2200 2000',
-    distance: 2.5,
-    hasOrganic: true,
-    hasLocal: false,
-  },
-  {
-    id: 3,
-    name: 'Santa Isabel Vitacura',
-    address: 'Av. Vitacura 3520, Vitacura',
-    lat: -33.3922,
-    lng: -70.5973,
-    hours: '8:00 - 21:00',
-    phone: '+56 2 2200 3000',
-    distance: 3.1,
-    hasOrganic: false,
-    hasLocal: true,
-  },
-  {
-    id: 4,
-    name: 'Tottus Plaza Egana',
-    address: 'Av. Larrain 5862, La Reina',
-    lat: -33.4502,
-    lng: -70.5655,
-    hours: '9:00 - 22:00',
-    phone: '+56 2 2200 4000',
-    distance: 4.8,
-    hasOrganic: true,
-    hasLocal: true,
-  },
-  {
-    id: 5,
-    name: 'Unimarc Nunoa',
-    address: 'Av. Irarrazaval 3450, Nunoa',
-    lat: -33.4547,
-    lng: -70.5997,
-    hours: '8:30 - 21:30',
-    phone: '+56 2 2200 5000',
-    distance: 5.2,
-    hasOrganic: false,
-    hasLocal: true,
-  },
-];
+import { productsAPI } from '../services/api';
 
 // Map container style
 const mapContainerStyle = {
@@ -89,12 +26,13 @@ const mapOptions = {
 };
 
 export default function StoreMap() {
-  const [stores] = useState(MOCK_STORES);
+  const [stores, setStores] = useState([]);
   const [selectedStore, setSelectedStore] = useState(null);
   const [filterOrganic, setFilterOrganic] = useState(false);
   const [filterLocal, setFilterLocal] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingStores, setLoadingStores] = useState(false);
   const [map, setMap] = useState(null);
   const [infoWindowStore, setInfoWindowStore] = useState(null);
 
@@ -102,6 +40,30 @@ export default function StoreMap() {
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
   });
+
+  // Fetch stores from API when user location is available
+  useEffect(() => {
+    const fetchStores = async () => {
+      if (!userLocation) return;
+
+      setLoadingStores(true);
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/stores/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=10`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setStores(data.stores || []);
+        }
+      } catch (error) {
+        console.error('Error fetching stores:', error);
+      } finally {
+        setLoadingStores(false);
+      }
+    };
+
+    fetchStores();
+  }, [userLocation]);
 
   // Filter stores
   const filteredStores = stores.filter((store) => {
