@@ -16,6 +16,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código de la aplicación
 COPY app/ ./app/
 
+# Copiar scripts de base de datos
+COPY scripts/ ./scripts/
+
 # Crear directorio para dataset (se monta como volumen en docker-compose)
 RUN mkdir -p ./data
 

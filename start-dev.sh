@@ -29,8 +29,50 @@ fi
 echo -e "${GREEN}✓ Python y Node.js detectados${NC}"
 echo ""
 
-# Crear directorio para PIDs
+# Crear directorios necesarios
 mkdir -p .dev-pids
+mkdir -p logs
+
+# Verificar si Docker está disponible para servicios de datos
+USE_DOCKER_DB=false
+if command -v docker &> /dev/null; then
+    if docker compose version &> /dev/null; then
+        COMPOSE_CMD="docker compose"
+        USE_DOCKER_DB=true
+    elif command -v docker-compose &> /dev/null; then
+        COMPOSE_CMD="docker-compose"
+        USE_DOCKER_DB=true
+    fi
+fi
+
+# Iniciar PostgreSQL y Redis con Docker si está disponible
+if [ "$USE_DOCKER_DB" = true ]; then
+    echo "🗄️  Iniciando servicios de datos (PostgreSQL y Redis)..."
+    $COMPOSE_CMD up -d postgres redis
+
+    # Esperar que PostgreSQL esté listo
+    echo "  Esperando que PostgreSQL esté listo..."
+    for i in {1..30}; do
+        if docker exec liquiverde-postgres pg_isready -U liquiverde > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ PostgreSQL listo!${NC}"
+            break
+        fi
+        sleep 1
+    done
+
+    # Esperar que Redis esté listo
+    for i in {1..10}; do
+        if docker exec liquiverde-redis redis-cli ping > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ Redis listo!${NC}"
+            break
+        fi
+        sleep 1
+    done
+    echo ""
+else
+    echo -e "${YELLOW}⚠️  Docker no disponible - usando fallback a JSON${NC}"
+    echo ""
+fi
 
 # Función para limpiar procesos al salir
 cleanup() {
@@ -123,6 +165,12 @@ echo "   Frontend:        http://localhost:5173"
 echo "   Backend API:     http://localhost:8000"
 echo "   API Docs:        http://localhost:8000/docs"
 echo ""
+if [ "$USE_DOCKER_DB" = true ]; then
+echo "🗄️  Servicios de datos:"
+echo "   PostgreSQL:      localhost:5432"
+echo "   Redis:           localhost:6379"
+echo ""
+fi
 echo "📝 Logs:"
 echo "   Backend:  tail -f logs/backend.log"
 echo "   Frontend: tail -f logs/frontend.log"
