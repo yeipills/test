@@ -628,64 +628,6 @@ El dataset incluye:
 
 ---
 
-## 🤖 Uso de IA en el Desarrollo
-
-### Herramientas de IA Utilizadas
-
-**Claude (Anthropic)** fue utilizado como asistente de desarrollo durante todo el proyecto.
-
-### Áreas donde la IA Asistió
-
-#### 1. Diseño de Algoritmos (40% asistencia)
-- **Algoritmo de Mochila Multi-objetivo:** Claude ayudó a diseñar la implementación del algoritmo genético, sugiriendo técnicas de selección por torneo, crossover y mutación adaptativa.
-- **Sistema de Scoring:** Asistió en definir las dimensiones de sostenibilidad y las fórmulas de normalización.
-- **Motor de Sustitución:** Colaboró en el diseño del cálculo de similitud multi-dimensional.
-
-**Aporte del desarrollador:** Decisiones de arquitectura, selección de pesos y parámetros, validación de resultados, ajuste fino de algoritmos.
-
-#### 2. Implementación de Código (60% asistencia)
-- **Backend API:** Claude generó código boilerplate para endpoints FastAPI, validación Pydantic, y estructura de servicios.
-- **Frontend React:** Asistió en crear componentes React, estructura de estado, y manejo de API calls.
-- **Docker & DevOps:** Ayudó con Dockerfiles, docker-compose.yml y configuración de nginx.
-
-**Aporte del desarrollador:** Lógica de negocio específica, integración de componentes, debugging, optimizaciones de rendimiento.
-
-#### 3. Documentación (70% asistencia)
-- Claude generó gran parte de la documentación técnica, docstrings y comentarios de código.
-- Ayudó a estructurar este README.md con ejemplos claros.
-
-**Aporte del desarrollador:** Revisión, corrección de inexactitudes, adición de contexto específico del proyecto.
-
-### Decisiones Tomadas por el Desarrollador
-
-Sin asistencia de IA:
-1. **Stack tecnológico:** Elección de FastAPI + React + Vite
-2. **Arquitectura general:** Separación backend/frontend, estructura de microservicios
-3. **Modelo de datos:** Diseño de estructuras de productos y listas de compras
-4. **Estrategia de optimización:** Uso de algoritmos genéticos vs otras alternativas
-5. **Experiencia de usuario:** Flow de navegación y diseño de interfaces
-6. **Dataset:** Selección de productos chilenos y datos realistas
-
-### Metodología de Trabajo con IA
-
-1. **Especificación clara:** El desarrollador especificó requerimientos detallados para cada componente
-2. **Iteración:** Revisión y refinamiento de código generado
-3. **Validación:** Testing manual y validación de algoritmos
-4. **Personalización:** Adaptación del código generado a necesidades específicas
-
-### Transparencia
-
-Este proyecto fue desarrollado con asistencia de IA como herramienta de productividad. El desarrollador:
-- Diseñó la arquitectura completa
-- Validó todos los algoritmos
-- Integró todos los componentes
-- Realizó testing y debugging
-- Tomó todas las decisiones técnicas finales
-
-La IA fue utilizada como un copiloto avanzado, NO como autor principal del código.
-
----
-
 ## ✅ Funcionalidades Bonus Implementadas
 
 ### 1. Dashboard de Sostenibilidad ✅
@@ -882,12 +824,54 @@ Ver [LICENSE](LICENSE) para detalles completos.
 
 ---
 
+## 🤖 Uso de IA en el Desarrollo
+
+Este proyecto fue desarrollado con asistencia de **Claude (Anthropic)** como herramienta de pair programming. La IA asistió en:
+
+### Áreas de Asistencia
+
+1. **Arquitectura y Diseño**
+   - Diseño de la estructura del proyecto
+   - Selección de patrones de diseño apropiados
+   - Decisiones de arquitectura (FastAPI vs Django, etc.)
+
+2. **Implementación de Algoritmos**
+   - Desarrollo del optimizador knapsack multi-objetivo
+   - Sistema de scoring de sostenibilidad
+   - Motor de sustituciones inteligentes
+
+3. **Frontend y UX**
+   - Componentes React con hooks
+   - Diseño responsive y accesible
+   - Manejo de estado y efectos
+
+4. **DevOps y Configuración**
+   - Configuración de Docker y docker-compose
+   - Setup de testing con pytest
+   - Configuración de PWA
+
+5. **Documentación**
+   - Documentación técnica de algoritmos
+   - Guías de contribución
+   - Comentarios en código
+
+### Herramientas Utilizadas
+
+- **Claude Code**: CLI oficial de Anthropic para desarrollo asistido por IA
+- **Modelo**: Claude Sonnet 4.5
+
+### Nota sobre Autoría
+
+Todo el código fue revisado, validado y es responsabilidad del autor humano. La IA sirvió como herramienta de asistencia, similar a usar documentación, Stack Overflow o pair programming con otro desarrollador.
+
+---
+
 ## 👨‍💻 Autor
 
 **Juan Pablo Rosas Martín**
 
 - GitHub: [@yeipills](https://github.com/yeipills)
-- Email: juanpablorosasmartin@proton.me
+- Email: juanpablorosasmartin@gmail.com
 
 ---
 

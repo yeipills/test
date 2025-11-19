@@ -60,24 +60,12 @@ app = FastAPI(
     - Open Food Facts API (información nutricional)
     - Carbon Footprint estimation
     - Google Maps API (geolocalización y tiendas)
-
-    ## Uso de IA en el Desarrollo
-
-    Este proyecto fue desarrollado con asistencia de Claude (Anthropic):
-    - Diseño de algoritmos de optimización multi-objetivo
-    - Implementación del sistema de scoring de sostenibilidad
-    - Arquitectura de API REST con FastAPI
-    - Estructura de datos y modelos Pydantic
-    - Sistema de recomendaciones basado en similitud
-
-    El desarrollador implementó la lógica de negocio, decisiones de arquitectura,
-    y validación de algoritmos. La IA asistió en código boilerplate, documentación
-    y optimizaciones.
     """,
     version="1.0.0",
     contact={
-        "name": "Grupo Lagos - LiquiVerde",
-        "url": "https://github.com/yourusername/liquiverde",
+        "name": "Juan Pablo Rosas Martín",
+        "url": "https://github.com/yeipills",
+        "email": "juanpablorosasmartin@gmail.com",
     },
 )
 
