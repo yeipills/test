@@ -259,43 +259,43 @@ export default function ProductSearch() {
         </div>
       </div>
 
-      {/* Three Column Layout */}
+      {/* Three Column Layout - Responsive */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 300px',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
         gap: '1rem',
         alignItems: 'start'
       }}>
         {/* Products Column 1 */}
-        <div className="card" style={{ marginBottom: 0, padding: '0.75rem' }}>
+        <div className="card" style={{ marginBottom: 0, padding: '0.75rem', minHeight: '400px' }}>
           <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem', color: '#374151' }}>
-            Productos ({products.filter((_, i) => i % 2 === 0).length})
+            Productos
           </h3>
           {loading ? (
             <div className="loading">
               <div className="spinner"></div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '500px', overflowY: 'auto' }}>
               {products.filter((_, i) => i % 2 === 0).map((product) => (
                 <div
                   key={product.id}
                   className="product-card"
                   onClick={() => handleProductClick(product)}
-                  style={{ marginBottom: 0 }}
+                  style={{ marginBottom: 0, padding: '0.625rem' }}
                 >
-                  <div className="product-header">
-                    <div>
-                      <div className="product-name">{product.name}</div>
-                      {product.brand && <div className="product-brand">{product.brand}</div>}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: '500', fontSize: '0.85rem', lineHeight: '1.2' }}>{product.name}</div>
+                      {product.brand && <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>{product.brand}</div>}
                     </div>
-                    <div className="product-price">${product.price}</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#10b981', flexShrink: 0 }}>${product.price}</div>
                   </div>
-                  <div className="product-category">{product.category}</div>
+                  <div style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '0.25rem' }}>{product.category}</div>
                   {product.labels && product.labels.length > 0 && (
-                    <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                    <div style={{ marginTop: '0.35rem', display: 'flex', gap: '0.2rem', flexWrap: 'wrap' }}>
                       {product.labels.slice(0, 2).map((label) => (
-                        <span key={label} className="badge badge-info" style={{ fontSize: '0.6rem' }}>
+                        <span key={label} className="badge badge-info" style={{ fontSize: '0.55rem', padding: '0.1rem 0.3rem' }}>
                           {label}
                         </span>
                       ))}
@@ -308,35 +308,35 @@ export default function ProductSearch() {
         </div>
 
         {/* Products Column 2 */}
-        <div className="card" style={{ marginBottom: 0, padding: '0.75rem' }}>
+        <div className="card" style={{ marginBottom: 0, padding: '0.75rem', minHeight: '400px' }}>
           <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem', color: '#374151' }}>
-            Continuación
+            Más productos
           </h3>
           {loading ? (
             <div className="loading">
               <div className="spinner"></div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '500px', overflowY: 'auto' }}>
               {products.filter((_, i) => i % 2 === 1).map((product) => (
                 <div
                   key={product.id}
                   className="product-card"
                   onClick={() => handleProductClick(product)}
-                  style={{ marginBottom: 0 }}
+                  style={{ marginBottom: 0, padding: '0.625rem' }}
                 >
-                  <div className="product-header">
-                    <div>
-                      <div className="product-name">{product.name}</div>
-                      {product.brand && <div className="product-brand">{product.brand}</div>}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: '500', fontSize: '0.85rem', lineHeight: '1.2' }}>{product.name}</div>
+                      {product.brand && <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>{product.brand}</div>}
                     </div>
-                    <div className="product-price">${product.price}</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#10b981', flexShrink: 0 }}>${product.price}</div>
                   </div>
-                  <div className="product-category">{product.category}</div>
+                  <div style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '0.25rem' }}>{product.category}</div>
                   {product.labels && product.labels.length > 0 && (
-                    <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                    <div style={{ marginTop: '0.35rem', display: 'flex', gap: '0.2rem', flexWrap: 'wrap' }}>
                       {product.labels.slice(0, 2).map((label) => (
-                        <span key={label} className="badge badge-info" style={{ fontSize: '0.6rem' }}>
+                        <span key={label} className="badge badge-info" style={{ fontSize: '0.55rem', padding: '0.1rem 0.3rem' }}>
                           {label}
                         </span>
                       ))}
@@ -355,7 +355,7 @@ export default function ProductSearch() {
         </div>
 
         {/* Map Column 3 */}
-        <div className="card" style={{ marginBottom: 0, padding: '0.75rem', position: 'sticky', top: '1rem' }}>
+        <div className="card" style={{ marginBottom: 0, padding: '0.75rem', minHeight: '400px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <MapPin size={18} />
@@ -379,7 +379,7 @@ export default function ProductSearch() {
 
           {!hasApiKey ? (
             <div style={{
-              height: '250px',
+              height: '200px',
               background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
               display: 'flex',
               flexDirection: 'column',
@@ -394,11 +394,11 @@ export default function ProductSearch() {
               </div>
             </div>
           ) : !isLoaded ? (
-            <div style={{ height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div className="spinner"></div>
             </div>
           ) : (
-            <div style={{ height: '250px', borderRadius: '0.5rem', overflow: 'hidden' }}>
+            <div style={{ height: '200px', borderRadius: '0.5rem', overflow: 'hidden' }}>
               <GoogleMap
                 mapContainerStyle={{ width: '100%', height: '100%' }}
                 center={userLocation || center}
@@ -466,22 +466,22 @@ export default function ProductSearch() {
 
           {/* Store List */}
           {stores.length > 0 && (
-            <div style={{ marginTop: '0.75rem' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>
+            <div style={{ marginTop: '0.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: '600', marginBottom: '0.35rem', color: '#374151' }}>
                 Tiendas ({stores.length})
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '200px', overflowY: 'auto' }}>
-                {stores.slice(0, 5).map((store) => (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1, overflowY: 'auto' }}>
+                {stores.slice(0, 6).map((store) => (
                   <div
                     key={store.id}
                     style={{
-                      padding: '0.5rem',
+                      padding: '0.4rem 0.5rem',
                       background: '#f9fafb',
                       borderRadius: '0.375rem',
-                      fontSize: '0.75rem',
+                      fontSize: '0.7rem',
                       cursor: 'pointer',
                       border: '1px solid #e5e7eb',
-                      transition: 'border-color 0.2s'
+                      transition: 'all 0.15s'
                     }}
                     onClick={() => {
                       if (map) {
@@ -491,12 +491,12 @@ export default function ProductSearch() {
                       setInfoWindowStore(store);
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                      <span style={{ fontWeight: '500' }}>{store.name}</span>
-                      <span style={{ color: '#3b82f6', fontWeight: '600' }}>{store.distance} km</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: '500', fontSize: '0.75rem', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{store.name}</span>
+                      <span style={{ color: '#3b82f6', fontWeight: '600', marginLeft: '0.5rem' }}>{store.distance}km</span>
                     </div>
                     {store.is_open !== null && store.is_open !== undefined && (
-                      <div style={{ fontSize: '0.65rem', color: store.is_open ? '#10b981' : '#ef4444' }}>
+                      <div style={{ fontSize: '0.6rem', color: store.is_open ? '#10b981' : '#ef4444', marginTop: '0.15rem' }}>
                         {store.is_open ? '● Abierto' : '● Cerrado'}
                       </div>
                     )}
