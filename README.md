@@ -12,13 +12,13 @@ Plataforma full-stack de retail inteligente que ayuda a los consumidores a ahorr
 - [Stack Tecnológico](#stack-tecnológico)
 - [Algoritmos Implementados](#algoritmos-implementados)
 - [Arquitectura del Sistema](#arquitectura-del-sistema)
+- [Documentación](#documentación)
 - [Instalación y Ejecución](#instalación-y-ejecución)
 - [API Documentation](#api-documentation)
 - [Dataset de Productos](#dataset-de-productos)
-- [Uso de IA en el Desarrollo](#uso-de-ia-en-el-desarrollo)
-- [Funcionalidades Bonus Implementadas](#funcionalidades-bonus-implementadas)
 - [Testing](#testing)
-- [Despliegue](#despliegue)
+- [Contribución](#contribución)
+- [Licencia](#licencia)
 
 ---
 
@@ -288,6 +288,12 @@ liquiverde/
 │   │   ├── routes/              # Endpoints de API
 │   │   ├── services/            # Lógica de negocio
 │   │   └── main.py              # Aplicación FastAPI
+│   ├── docs/
+│   │   └── algorithms/          # Documentación técnica de algoritmos
+│   │       ├── knapsack_optimizer.md
+│   │       ├── sustainability_scorer.md
+│   │       └── substitution_engine.md
+│   ├── tests/                   # Suite de tests con pytest
 │   ├── Dockerfile
 │   └── requirements.txt
 ├── frontend/
@@ -296,7 +302,8 @@ liquiverde/
 │   │   │   ├── ProductSearch.jsx
 │   │   │   ├── ShoppingListOptimizer.jsx
 │   │   │   ├── Dashboard.jsx
-│   │   │   └── ProductComparator.jsx
+│   │   │   ├── ProductComparator.jsx
+│   │   │   └── StoreMap.jsx
 │   │   ├── services/            # API client
 │   │   ├── styles/              # CSS
 │   │   ├── App.jsx
@@ -307,8 +314,33 @@ liquiverde/
 ├── data/
 │   └── products_dataset.json    # Dataset de 20 productos
 ├── docker-compose.yml
+├── ARCHITECTURE.md              # Decisiones técnicas y arquitectura
+├── CONTRIBUTING.md              # Guía de contribución
+├── LICENSE                      # Licencia propietaria
 └── README.md
 ```
+
+---
+
+## 📚 Documentación
+
+### Documentación Técnica
+
+| Documento | Descripción |
+|-----------|-------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Decisiones técnicas, patrones de diseño, flujo de datos |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Guía de contribución, estilo de código, proceso de PRs |
+| [LICENSE](LICENSE) | Licencia propietaria - Todos los derechos reservados |
+
+### Documentación de Algoritmos
+
+Documentación detallada de los algoritmos en `backend/docs/algorithms/`:
+
+| Algoritmo | Documento | Contenido |
+|-----------|-----------|-----------|
+| Knapsack Optimizer | [knapsack_optimizer.md](backend/docs/algorithms/knapsack_optimizer.md) | Fases de ejecución, complejidad O(n×m), parámetros de tuning |
+| Sustainability Scorer | [sustainability_scorer.md](backend/docs/algorithms/sustainability_scorer.md) | Sistema de puntuación multi-dimensional, fórmulas, pesos |
+| Substitution Engine | [substitution_engine.md](backend/docs/algorithms/substitution_engine.md) | Cálculo de similitud, filtros, proceso de sustitución |
 
 ---
 
@@ -826,39 +858,36 @@ curl -X POST http://localhost:8000/api/products/compare \
 
 ## 🤝 Contribución
 
-Este es un proyecto de desafío técnico. Para mejoras futuras considerar:
+Para contribuir a este proyecto, consulta la [Guía de Contribución](CONTRIBUTING.md).
+
+### Mejoras Futuras
 
 1. **Base de datos persistente:** Migrar a PostgreSQL
 2. **Autenticación:** JWT para usuarios
 3. **Historial de compras:** Tracking de listas optimizadas
 4. **Machine Learning:** Recomendaciones personalizadas
 5. **Geolocalización real:** Rutas optimizadas de compra
-6. **Testing:** Suite completa de tests unitarios e integración
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto fue desarrollado como parte de un desafío técnico para Grupo Lagos.
+**Licencia Propietaria - Todos los Derechos Reservados**
+
+Este software es propiedad exclusiva del autor. Queda prohibido usar, copiar, modificar o distribuir sin autorización expresa por escrito.
+
+Para solicitar licencia de uso, contactar al autor.
+
+Ver [LICENSE](LICENSE) para detalles completos.
 
 ---
 
 ## 👨‍💻 Autor
 
-Desarrollado para el desafío técnico LiquiVerde de Grupo Lagos
+**Juan Pablo Rosas Martín**
 
-**Contacto:**
-- GitHub: [Tu GitHub]
-- Email: [Tu Email]
-
----
-
-## 🙏 Agradecimientos
-
-- **Grupo Lagos** por el desafío técnico
-- **Open Food Facts** por la API pública de productos
-- **FastAPI** y **React** communities
-- **Claude (Anthropic)** como herramienta de asistencia en desarrollo
+- GitHub: [@yeipills](https://github.com/yeipills)
+- Email: juanpablorosasmartin@proton.me
 
 ---
 
