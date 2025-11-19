@@ -6,7 +6,7 @@ import { productsAPI } from '../services/api';
 // Map container style
 const mapContainerStyle = {
   width: '100%',
-  height: '350px',
+  height: '500px',
   borderRadius: '0.5rem',
 };
 
@@ -301,13 +301,13 @@ export default function StoreMap() {
       </div>
 
       {/* Store List */}
-      <div className="card" style={{ marginBottom: 0 }}>
+      <div className="card" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', height: '500px' }}>
         <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Store size={18} style={{ color: '#3b82f6' }} />
           Tiendas ({filteredStores.length})
         </h2>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, overflowY: 'auto' }}>
           {filteredStores.map((store) => (
             <div
               key={store.id}
