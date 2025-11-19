@@ -1,7 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { productsAPI } from '../services/api';
-import { Search, Barcode, Leaf, TrendingUp, Heart, PackageSearch } from 'lucide-react';
+import { Search, Barcode, Leaf, MapPin, Navigation, Store, Clock, Phone, AlertCircle } from 'lucide-react';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { useToast } from './Toast';
+
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%',
+  minHeight: '400px',
+  borderRadius: '0.5rem',
+};
+
+const center = {
+  lat: -33.4489,
+  lng: -70.6693,
+};
+
+const mapOptions = {
+  disableDefaultUI: false,
+  zoomControl: true,
+  streetViewControl: false,
+  mapTypeControl: false,
+  fullscreenControl: true,
+};
 
 export default function ProductSearch() {
   const toast = useToast();
@@ -15,10 +36,44 @@ export default function ProductSearch() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [analysis, setAnalysis] = useState(null);
 
+  // Map state
+  const [stores, setStores] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
+  const [loadingLocation, setLoadingLocation] = useState(false);
+  const [map, setMap] = useState(null);
+  const [infoWindowStore, setInfoWindowStore] = useState(null);
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+  });
+
+  const hasApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
   useEffect(() => {
     loadCategories();
     loadAllProducts();
   }, []);
+
+  // Fetch stores when user location changes
+  useEffect(() => {
+    const fetchStores = async () => {
+      if (!userLocation) return;
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/stores/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=10`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setStores(data.stores || []);
+        }
+      } catch (error) {
+        console.error('Error fetching stores:', error);
+      }
+    };
+
+    fetchStores();
+  }, [userLocation]);
 
   const loadCategories = async () => {
     try {
@@ -43,7 +98,6 @@ export default function ProductSearch() {
     }
   };
 
-  // Filtrar en tiempo real
   const handleQueryChange = (value) => {
     setSearchQuery(value);
     filterProducts(value, selectedCategory);
@@ -70,29 +124,12 @@ export default function ProductSearch() {
     setProducts(filtered);
   };
 
-  const handleSearch = async () => {
-    try {
-      setLoading(true);
-      const params = {};
-      if (searchQuery) params.q = searchQuery;
-      if (selectedCategory) params.category = selectedCategory;
-
-      const { data } = await productsAPI.search(params);
-      setProducts(data.results || []);
-    } catch (error) {
-      console.error('Error searching:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleBarcodeSearch = async () => {
     if (!barcode) {
       toast.warning('Ingresa un código de barras');
       return;
     }
 
-    // Validate barcode format (numbers only)
     if (!/^\d+$/.test(barcode)) {
       toast.warning('El código de barras debe contener solo números');
       return;
@@ -127,60 +164,258 @@ export default function ProductSearch() {
     return '#ef4444';
   };
 
+  // Map functions
+  const onMapLoad = useCallback((map) => {
+    setMap(map);
+  }, []);
+
+  const onMapUnmount = useCallback(() => {
+    setMap(null);
+  }, []);
+
+  const getUserLocation = () => {
+    setLoadingLocation(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userPos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setUserLocation(userPos);
+          if (map) {
+            map.panTo(userPos);
+            map.setZoom(14);
+          }
+          setLoadingLocation(false);
+          toast.success('Ubicación obtenida');
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          toast.error('No se pudo obtener la ubicación');
+          setLoadingLocation(false);
+        }
+      );
+    } else {
+      toast.error('Geolocalización no soportada');
+      setLoadingLocation(false);
+    }
+  };
+
+  const openInMaps = (store) => {
+    const origin = userLocation
+      ? `${userLocation.lat},${userLocation.lng}`
+      : '';
+    const url = userLocation
+      ? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${store.lat},${store.lng}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <div>
-      <div className="card">
-        <h2 className="card-title">Buscar Productos</h2>
+      <h1 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: '1rem' }}>
+        Productos y Tiendas
+      </h1>
 
-        {/* Search by Name */}
-        <div className="form-group">
-          <label className="form-label">
-            <Search size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
-            Buscar por nombre
-          </label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Buscar producto..."
-              value={searchQuery}
-              onChange={(e) => handleQueryChange(e.target.value)}
-            />
-            <select
-              className="form-select"
-              value={selectedCategory}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              style={{ maxWidth: '200px' }}
-            >
-              <option value="">Todas las categorías</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+      {/* Split Layout */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1rem'
+      }}>
+        {/* Left: Search */}
+        <div className="card" style={{ marginBottom: 0 }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Search size={18} />
+            Buscar Productos
+          </h2>
+
+          {/* Search by Name */}
+          <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Buscar producto..."
+                value={searchQuery}
+                onChange={(e) => handleQueryChange(e.target.value)}
+              />
+              <select
+                className="form-select"
+                value={selectedCategory}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+                style={{ maxWidth: '150px' }}
+              >
+                <option value="">Todas</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Search by Barcode */}
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Código de barras..."
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleBarcodeSearch()}
+              />
+              <button className="btn btn-primary" onClick={handleBarcodeSearch} style={{ padding: '0.5rem 0.75rem' }}>
+                <Barcode size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Search by Barcode */}
-        <div className="form-group">
-          <label className="form-label">
-            <Barcode size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
-            Escanear código de barras
-          </label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Ingrese código de barras..."
-              value={barcode}
-              onChange={(e) => setBarcode(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleBarcodeSearch()}
-            />
-            <button className="btn btn-primary" onClick={handleBarcodeSearch}>
-              Escanear
+        {/* Right: Map */}
+        <div className="card" style={{ marginBottom: 0, padding: '0.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <MapPin size={18} />
+              Tiendas Cercanas
+            </h2>
+            <button
+              onClick={getUserLocation}
+              disabled={loadingLocation}
+              className="btn"
+              style={{
+                background: userLocation ? '#10b981' : '#3b82f6',
+                color: 'white',
+                padding: '0.35rem 0.75rem',
+                fontSize: '0.75rem'
+              }}
+            >
+              <Navigation size={12} />
+              {loadingLocation ? '...' : userLocation ? 'OK' : 'Ubicación'}
             </button>
           </div>
+
+          {!hasApiKey ? (
+            <div style={{
+              height: '200px',
+              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '0.5rem',
+              padding: '1rem',
+            }}>
+              <AlertCircle size={32} style={{ color: '#d97706', marginBottom: '0.5rem' }} />
+              <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#92400e', textAlign: 'center' }}>
+                Configura VITE_GOOGLE_MAPS_API_KEY
+              </div>
+            </div>
+          ) : !isLoaded ? (
+            <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="spinner"></div>
+            </div>
+          ) : (
+            <div style={{ height: '200px', borderRadius: '0.5rem', overflow: 'hidden' }}>
+              <GoogleMap
+                mapContainerStyle={{ width: '100%', height: '100%' }}
+                center={userLocation || center}
+                zoom={userLocation ? 14 : 12}
+                onLoad={onMapLoad}
+                onUnmount={onMapUnmount}
+                options={mapOptions}
+              >
+                {userLocation && (
+                  <Marker
+                    position={userLocation}
+                    icon={{
+                      path: window.google.maps.SymbolPath.CIRCLE,
+                      scale: 8,
+                      fillColor: '#3b82f6',
+                      fillOpacity: 1,
+                      strokeColor: '#ffffff',
+                      strokeWeight: 2,
+                    }}
+                    title="Tu ubicación"
+                  />
+                )}
+
+                {stores.map((store) => (
+                  <Marker
+                    key={store.id}
+                    position={{ lat: store.lat, lng: store.lng }}
+                    onClick={() => setInfoWindowStore(store)}
+                  />
+                ))}
+
+                {infoWindowStore && (
+                  <InfoWindow
+                    position={{ lat: infoWindowStore.lat, lng: infoWindowStore.lng }}
+                    onCloseClick={() => setInfoWindowStore(null)}
+                  >
+                    <div style={{ padding: '0.25rem', maxWidth: '180px' }}>
+                      <div style={{ fontWeight: '600', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                        {infoWindowStore.name}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                        {infoWindowStore.distance} km
+                      </div>
+                      <button
+                        onClick={() => openInMaps(infoWindowStore)}
+                        style={{
+                          width: '100%',
+                          padding: '0.3rem',
+                          background: '#10b981',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '0.25rem',
+                          fontSize: '0.7rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Cómo llegar
+                      </button>
+                    </div>
+                  </InfoWindow>
+                )}
+              </GoogleMap>
+            </div>
+          )}
+
+          {/* Store List */}
+          {stores.length > 0 && (
+            <div style={{ marginTop: '0.5rem', maxHeight: '120px', overflowY: 'auto' }}>
+              {stores.slice(0, 3).map((store) => (
+                <div
+                  key={store.id}
+                  style={{
+                    padding: '0.5rem',
+                    background: '#f9fafb',
+                    borderRadius: '0.375rem',
+                    marginBottom: '0.35rem',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    if (map) {
+                      map.panTo({ lat: store.lat, lng: store.lng });
+                      map.setZoom(16);
+                    }
+                    setInfoWindowStore(store);
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '500' }}>{store.name}</span>
+                    <span style={{ color: '#3b82f6', fontWeight: '600' }}>{store.distance} km</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -206,6 +441,14 @@ export default function ProductSearch() {
               </div>
 
               <div className="product-category">{product.category}</div>
+
+              {/* Store info */}
+              {product.store && (
+                <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <Store size={10} />
+                  {product.store}
+                </div>
+              )}
 
               {product.labels && product.labels.length > 0 && (
                 <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
@@ -246,6 +489,12 @@ export default function ProductSearch() {
         </div>
       )}
 
+      {products.length === 0 && !loading && (
+        <div className="card" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+          No se encontraron productos
+        </div>
+      )}
+
       {/* Product Analysis Modal */}
       {selectedProduct && analysis && (
         <div
@@ -281,6 +530,12 @@ export default function ProductSearch() {
               {selectedProduct.brand && (
                 <div style={{ color: '#6b7280', marginTop: '0.25rem' }}>{selectedProduct.brand}</div>
               )}
+              {selectedProduct.store && (
+                <div style={{ color: '#6b7280', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <Store size={14} />
+                  {selectedProduct.store}
+                </div>
+              )}
             </div>
 
             {/* Sustainability Scores */}
@@ -288,15 +543,15 @@ export default function ProductSearch() {
               <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem' }}>
                 Puntuación de Sostenibilidad
               </h3>
-              <div className="score-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 {[
                   { label: 'Económico', value: analysis.sustainability.economic_score },
                   { label: 'Ambiental', value: analysis.sustainability.environmental_score },
                   { label: 'Social', value: analysis.sustainability.social_score },
                   { label: 'Salud', value: analysis.sustainability.health_score },
                 ].map((score) => (
-                  <div key={score.label} className="score-item">
-                    <div className="score-label">{score.label}</div>
+                  <div key={score.label}>
+                    <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>{score.label}</div>
                     <div className="score-bar">
                       <div
                         className="score-fill"
@@ -306,18 +561,18 @@ export default function ProductSearch() {
                         }}
                       ></div>
                     </div>
-                    <div className="score-value">{score.value.toFixed(0)}/100</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: '600', marginTop: '0.25rem' }}>{score.value.toFixed(0)}/100</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Recommendation */}
-            <div className="card" style={{ background: '#f0fdf4', padding: '1rem', marginBottom: '1rem' }}>
+            <div style={{ background: '#f0fdf4', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1rem' }}>
               <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#065f46' }}>
                 Recomendación
               </div>
-              <div style={{ color: '#047857' }}>{analysis.recommendation}</div>
+              <div style={{ color: '#047857', fontSize: '0.9rem' }}>{analysis.recommendation}</div>
             </div>
 
             {/* Savings Potential */}

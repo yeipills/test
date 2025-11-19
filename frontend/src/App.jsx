@@ -4,7 +4,6 @@ import Dashboard from './components/Dashboard';
 import ProductSearch from './components/ProductSearch';
 import ShoppingListOptimizer from './components/ShoppingListOptimizer';
 import ProductComparator from './components/ProductComparator';
-import StoreMap from './components/StoreMap';
 import { ToastProvider } from './components/Toast';
 import './styles/App.css';
 
@@ -26,6 +25,10 @@ function App() {
 
   // Navigate to a tab with optional data
   const navigateTo = (tab, data = null) => {
+    // Redirect stores to search (now combined)
+    if (tab === 'stores') {
+      tab = 'search';
+    }
     setNavigationData(data);
     setActiveTab(tab);
   };
@@ -45,8 +48,6 @@ function App() {
         return <ProductComparator />;
       case 'dashboard':
         return <Dashboard />;
-      case 'stores':
-        return <StoreMap />;
       default:
         return <ShoppingListOptimizer />;
     }
@@ -74,12 +75,12 @@ function App() {
                   Optimizar
                 </button>
 
-                {/* Flujo: Buscar → Comparar → Ver stats → Tiendas */}
+                {/* Productos + Tiendas combinados */}
                 <button
                   className={`nav-btn ${activeTab === 'search' ? 'active' : ''}`}
                   onClick={() => navigateTo('search')}
                 >
-                  <Search size={16} />
+                  <MapPin size={16} />
                   Productos
                 </button>
                 <button
@@ -95,13 +96,6 @@ function App() {
                 >
                   <TrendingUp size={16} />
                   Stats
-                </button>
-                <button
-                  className={`nav-btn ${activeTab === 'stores' ? 'active' : ''}`}
-                  onClick={() => navigateTo('stores')}
-                >
-                  <MapPin size={16} />
-                  Tiendas
                 </button>
               </nav>
             </div>
