@@ -259,66 +259,20 @@ export default function ProductSearch() {
         </div>
       </div>
 
-      {/* Three Column Layout - Responsive */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: '1rem',
-        alignItems: 'start'
-      }}>
-        {/* Products Column 1 */}
-        <div className="card" style={{ marginBottom: 0, padding: '0.75rem', minHeight: '400px' }}>
-          <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem', color: '#374151' }}>
-            Productos
+      {/* Two Column Layout - Products Left, Map Right */}
+      <div className="products-map-layout">
+        {/* Products Section - Left */}
+        <div className="card" style={{ marginBottom: 0 }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', color: '#374151' }}>
+            Productos ({products.length})
           </h3>
           {loading ? (
             <div className="loading">
               <div className="spinner"></div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '500px', overflowY: 'auto' }}>
-              {products.filter((_, i) => i % 2 === 0).map((product) => (
-                <div
-                  key={product.id}
-                  className="product-card"
-                  onClick={() => handleProductClick(product)}
-                  style={{ marginBottom: 0, padding: '0.625rem' }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: '500', fontSize: '0.85rem', lineHeight: '1.2' }}>{product.name}</div>
-                      {product.brand && <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>{product.brand}</div>}
-                    </div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#10b981', flexShrink: 0 }}>${product.price}</div>
-                  </div>
-                  <div style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '0.25rem' }}>{product.category}</div>
-                  {product.labels && product.labels.length > 0 && (
-                    <div style={{ marginTop: '0.35rem', display: 'flex', gap: '0.2rem', flexWrap: 'wrap' }}>
-                      {product.labels.slice(0, 2).map((label) => (
-                        <span key={label} className="badge badge-info" style={{ fontSize: '0.55rem', padding: '0.1rem 0.3rem' }}>
-                          {label}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Products Column 2 */}
-        <div className="card" style={{ marginBottom: 0, padding: '0.75rem', minHeight: '400px' }}>
-          <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem', color: '#374151' }}>
-            Más productos
-          </h3>
-          {loading ? (
-            <div className="loading">
-              <div className="spinner"></div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '500px', overflowY: 'auto' }}>
-              {products.filter((_, i) => i % 2 === 1).map((product) => (
+            <div className="wide-grid-3" style={{ gap: '0.5rem', maxHeight: '600px', overflowY: 'auto' }}>
+              {products.map((product) => (
                 <div
                   key={product.id}
                   className="product-card"
@@ -354,8 +308,8 @@ export default function ProductSearch() {
           )}
         </div>
 
-        {/* Map Column 3 */}
-        <div className="card" style={{ marginBottom: 0, padding: '0.75rem', minHeight: '400px' }}>
+        {/* Map Section - Right */}
+        <div className="card" style={{ marginBottom: 0, padding: '0.75rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <MapPin size={18} />
@@ -398,7 +352,7 @@ export default function ProductSearch() {
               <div className="spinner"></div>
             </div>
           ) : (
-            <div style={{ height: '200px', borderRadius: '0.5rem', overflow: 'hidden' }}>
+            <div style={{ height: '300px', borderRadius: '0.5rem', overflow: 'hidden' }}>
               <GoogleMap
                 mapContainerStyle={{ width: '100%', height: '100%' }}
                 center={userLocation || center}

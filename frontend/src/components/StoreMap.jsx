@@ -178,10 +178,8 @@ export default function StoreMap() {
         </div>
       </div>
 
-      {/* Main Content - Two columns on large screens */}
-      <div className="wide-grid-2" style={{ alignItems: 'start' }}>
-        {/* Google Map */}
-        <div className="card" style={{ marginBottom: 0, padding: 0, overflow: 'hidden' }}>
+      {/* Map Section - Full width */}
+      <div className="card" style={{ marginBottom: '1rem', padding: 0, overflow: 'hidden' }}>
         {loadError && (
           <div style={{ padding: '2rem', textAlign: 'center', color: '#ef4444' }}>
             <AlertCircle size={32} style={{ marginBottom: '0.5rem' }} />
@@ -301,13 +299,13 @@ export default function StoreMap() {
       </div>
 
       {/* Store List */}
-      <div className="card" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', height: '500px' }}>
+      <div className="card">
         <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Store size={18} style={{ color: '#3b82f6' }} />
           Tiendas ({filteredStores.length})
         </h2>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, overflowY: 'auto' }}>
+        <div className="wide-grid-3" style={{ gap: '0.75rem' }}>
           {filteredStores.map((store) => (
             <div
               key={store.id}
@@ -397,7 +395,6 @@ export default function StoreMap() {
           </div>
         )}
       </div>
-    </div>
     </div>
   );
 }

@@ -130,11 +130,7 @@ def sustainability_scorer():
 @pytest.fixture
 def knapsack_optimizer():
     """Create a MultiObjectiveKnapsackOptimizer instance"""
-    return MultiObjectiveKnapsackOptimizer(
-        population_size=20,
-        generations=50,
-        mutation_rate=0.15
-    )
+    return MultiObjectiveKnapsackOptimizer()
 
 
 @pytest.fixture

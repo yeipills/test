@@ -39,13 +39,24 @@ class MultiObjectiveKnapsackOptimizer:
         items_not_found = []
         warnings = []
 
+        # Crear índice de productos por ID para búsqueda rápida
+        products_by_id = {}
+        for category_products in available_products.values():
+            for product in category_products:
+                products_by_id[product.id] = product
+
         for item in items:
-            candidates = self._find_candidate_products(item, available_products)
-            if candidates:
-                item_candidates.append((item, candidates))
+            # Si el usuario seleccionó un producto específico, usarlo directamente
+            if item.product_id and item.product_id in products_by_id:
+                specific_product = products_by_id[item.product_id]
+                item_candidates.append((item, [specific_product]))
             else:
-                items_not_found.append(item.product_name)
-                warnings.append(f"No se encontraron productos para '{item.product_name}'")
+                candidates = self._find_candidate_products(item, available_products)
+                if candidates:
+                    item_candidates.append((item, candidates))
+                else:
+                    items_not_found.append(item.product_name)
+                    warnings.append(f"No se encontraron productos para '{item.product_name}'")
 
         if not item_candidates:
             result = self._create_empty_result(shopping_list)
@@ -75,9 +86,10 @@ class MultiObjectiveKnapsackOptimizer:
         self, item: ShoppingListItem, available_products: Dict[str, List[Product]]
     ) -> List[Product]:
         """Encuentra productos candidatos que coincidan con el item"""
-        candidates = []
-        name_matches = []
+        exact_matches = []
+        partial_matches = []
         search_name = (item.product_name or "").lower().strip()
+        search_words = search_name.split()
 
         category_products = available_products.get(item.category, [])
 
@@ -90,18 +102,32 @@ class MultiObjectiveKnapsackOptimizer:
             if item.preferences and not self._matches_preferences(product, item.preferences):
                 continue
 
-            # Priorizar por coincidencia de nombre
-            if search_name:
-                product_name_lower = product.name.lower()
-                if search_name in product_name_lower or product_name_lower in search_name:
-                    name_matches.append(product)
-                else:
-                    candidates.append(product)
-            else:
-                candidates.append(product)
+            product_name_lower = product.name.lower()
 
-        # Priorizar matches por nombre
-        return name_matches + candidates if name_matches else candidates
+            if search_name:
+                # Match exacto o casi exacto
+                if search_name == product_name_lower or search_name in product_name_lower:
+                    exact_matches.append(product)
+                # Match parcial - al menos la primera palabra coincide
+                elif search_words and search_words[0] in product_name_lower:
+                    partial_matches.append(product)
+                # No incluir productos que no coinciden con el nombre
+            else:
+                # Si no hay nombre de búsqueda, incluir todos de la categoría
+                partial_matches.append(product)
+
+        # Solo devolver productos que coincidan con el nombre
+        if exact_matches:
+            return exact_matches
+        elif partial_matches:
+            return partial_matches
+        else:
+            # Como fallback, buscar la primera palabra en todos los productos
+            if search_words:
+                for product in category_products:
+                    if search_words[0] in product.name.lower():
+                        partial_matches.append(product)
+            return partial_matches
 
     def _matches_preferences(self, product: Product, preferences: List[str]) -> bool:
         """Verifica si un producto cumple con las preferencias"""
