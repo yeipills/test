@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { shoppingListAPI, productsAPI } from '../services/api';
-import { ShoppingCart, Plus, Trash2, Sparkles, DollarSign, Leaf, BarChart3, MapPin, Download, Store, Recycle, Heart, Award, ChevronDown, ChevronUp, ArrowRightLeft } from 'lucide-react';
+import { ShoppingCart, Plus, Trash2, Sparkles, DollarSign, Leaf, BarChart3, MapPin, Download, Store, Recycle, Heart, Award, ChevronDown, ChevronUp, ArrowRightLeft, Zap, ArrowRight } from 'lucide-react';
 import { useToast } from './Toast';
 import { useNavigation } from '../App';
 
@@ -90,7 +90,8 @@ export default function ShoppingListOptimizer() {
     const newItems = [...items];
     newItems[index].product_name = product.name;
     newItems[index].category = product.category;
-    newItems[index].product_id = product.id;
+    // No establecer product_id para que el optimizador pueda encontrar todas las variantes
+    // y calcular oportunidades de ahorro
     setItems(newItems);
     setSuggestions({ ...suggestions, [index]: [] });
     setActiveInput(null);
@@ -185,16 +186,29 @@ export default function ShoppingListOptimizer() {
       ...item.alternatives.filter(a => a.id !== alternative.id)
     ].slice(0, 3);
 
-    // Recalculate savings
+    // Recalculate savings for this item
     const maxPrice = Math.max(oldSelected.price, alternative.price, ...item.alternatives.map(a => a.price));
     item.savings = Math.max(0, maxPrice - alternative.price);
 
-    // Recalculate totals
+    // Recalculate all totals
     const totalCost = newResult.optimized_items.reduce(
       (sum, i) => sum + (i.selected_product.price * (i.original_item?.quantity || 1)),
       0
     );
     newResult.total_cost = totalCost;
+
+    // Recalculate estimated savings (sum of individual savings)
+    const totalSavings = newResult.optimized_items.reduce(
+      (sum, i) => sum + (i.savings || 0),
+      0
+    );
+    newResult.estimated_savings = totalSavings;
+
+    // Recalculate budget used percentage
+    const budgetValue = budget ? parseFloat(budget) : null;
+    if (budgetValue && budgetValue > 0) {
+      newResult.budget_used_percentage = (totalCost / budgetValue) * 100;
+    }
 
     setResult(newResult);
     toast.info(`Cambiado a ${alternative.name}`);
@@ -416,6 +430,25 @@ export default function ShoppingListOptimizer() {
         <div className="card">
           <h2 className="card-title">Resultado de la Optimización</h2>
 
+          {/* Warnings */}
+          {result.warnings && result.warnings.length > 0 && (
+            <div style={{
+              marginBottom: '1rem',
+              padding: '0.75rem 1rem',
+              background: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: '0.5rem',
+              color: '#92400e'
+            }}>
+              <div style={{ fontWeight: '600', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                ⚠️ Atención
+              </div>
+              {result.warnings.map((warning, i) => (
+                <div key={i} style={{ fontSize: '0.875rem' }}>• {warning}</div>
+              ))}
+            </div>
+          )}
+
           {/* Summary Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
             <div style={{ padding: '1rem', background: '#f0fdf4', borderRadius: '0.5rem' }}>
@@ -454,6 +487,7 @@ export default function ShoppingListOptimizer() {
               </div>
             </div>
           </div>
+
 
           {/* Sustainability Breakdown */}
           <div style={{ marginBottom: '1.5rem' }}>

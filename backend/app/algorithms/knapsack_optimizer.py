@@ -10,7 +10,7 @@ Lógica correcta:
 
 from typing import List, Dict, Tuple, Optional
 from ..models.product import Product, SustainabilityScore
-from ..models.shopping_list import ShoppingListItem, ShoppingList, OptimizedProduct, OptimizedShoppingList
+from ..models.shopping_list import ShoppingListItem, ShoppingList, OptimizedProduct, OptimizedShoppingList, SavingsOpportunity
 from .sustainability_scorer import SustainabilityScorer
 
 
@@ -72,8 +72,29 @@ class MultiObjectiveKnapsackOptimizer:
             selections.append((item, candidates, best_product, default_product))
 
         # Fase 3: Ajustar al presupuesto (excluir items de baja prioridad)
+        original_count = len(selections)
         if budget < float('inf'):
             selections = self._fit_to_budget(selections, budget)
+
+        # Detectar items excluidos por presupuesto
+        if len(selections) < original_count:
+            included_names = {s[0].product_name for s in selections}
+            for item, candidates in item_candidates:
+                if item.product_name not in included_names:
+                    warnings.append(f"'{item.product_name}' excluido por límite de presupuesto")
+
+        # Warning si no se incluyó ningún producto
+        if len(selections) == 0 and original_count > 0:
+            # Calcular presupuesto mínimo necesario
+            min_prices = []
+            for item, candidates in item_candidates:
+                if candidates:
+                    min_price = min(c.price for c in candidates)
+                    min_prices.append(min_price)
+            if min_prices:
+                min_total = sum(min_prices)
+                cheapest = min(min_prices)
+                warnings.insert(0, f"Presupuesto insuficiente. Mínimo necesario: ${cheapest:.0f} para 1 producto, ${min_total:.0f} para todos")
 
         # Fase 4: Construir resultado
         result = self._build_result(shopping_list, selections, budget)
@@ -88,6 +109,7 @@ class MultiObjectiveKnapsackOptimizer:
         """Encuentra productos candidatos que coincidan con el item"""
         exact_matches = []
         partial_matches = []
+        category_matches = []
         search_name = (item.product_name or "").lower().strip()
         search_words = search_name.split()
 
@@ -111,14 +133,24 @@ class MultiObjectiveKnapsackOptimizer:
                 # Match parcial - al menos la primera palabra coincide
                 elif search_words and search_words[0] in product_name_lower:
                     partial_matches.append(product)
-                # No incluir productos que no coinciden con el nombre
+                # Guardar todos los productos de la categoría como posibles alternativas
+                else:
+                    category_matches.append(product)
             else:
                 # Si no hay nombre de búsqueda, incluir todos de la categoría
                 partial_matches.append(product)
 
-        # Solo devolver productos que coincidan con el nombre
+        # Siempre incluir productos similares de la categoría como alternativas
         if exact_matches:
-            return exact_matches
+            # Si hay match exacto, agregar también los parciales y algunos de la categoría
+            # para tener alternativas disponibles
+            all_candidates = exact_matches + partial_matches
+            # Agregar productos de la misma categoría que coincidan con la primera palabra
+            if search_words:
+                for product in category_matches:
+                    if search_words[0] in product.name.lower():
+                        all_candidates.append(product)
+            return all_candidates if all_candidates else exact_matches
         elif partial_matches:
             return partial_matches
         else:
@@ -143,6 +175,13 @@ class MultiObjectiveKnapsackOptimizer:
         """Selecciona el mejor producto según el objetivo de optimización"""
         if not candidates:
             return None
+
+        # Si el usuario escribió un nombre de producto específico (largo), priorizarlo
+        search_name = (item.product_name or "").lower().strip()
+        if len(search_name) > 15:  # Nombre específico de producto
+            for candidate in candidates:
+                if search_name in candidate.name.lower() or candidate.name.lower() in search_name:
+                    return candidate
 
         if optimize_for == "price":
             # Menor precio
@@ -188,7 +227,12 @@ class MultiObjectiveKnapsackOptimizer:
         Ajusta la selección al presupuesto usando algoritmo greedy.
         Primero intenta variantes más baratas, luego excluye items.
         """
-        # Paso 1: Usar variantes más baratas para todos los items
+        # Paso 1: Verificar si las selecciones originales caben en el presupuesto
+        original_cost = sum(sel[2].price * sel[0].quantity for sel in selections if sel[2])
+        if original_cost <= budget:
+            return selections
+
+        # Paso 2: Crear versión con variantes más baratas
         cheap_selections = []
         for item, candidates, best, default in selections:
             if candidates:
@@ -197,24 +241,14 @@ class MultiObjectiveKnapsackOptimizer:
             else:
                 cheap_selections.append((item, candidates, best, default))
 
-        # Calcular costo con variantes baratas
-        total_cost = sum(sel[2].price * sel[0].quantity for sel in cheap_selections if sel[2])
+        # Verificar si las variantes baratas caben
+        cheap_cost = sum(sel[2].price * sel[0].quantity for sel in cheap_selections if sel[2])
+        if cheap_cost <= budget:
+            # Cabe todo con variantes baratas, intentar mejorar con presupuesto restante
+            return self._upgrade_selections(cheap_selections, budget, selections)
 
-        if total_cost <= budget:
-            # Cabe todo con variantes baratas, ahora optimizar según objetivo original
-            return selections if sum(s[2].price * s[0].quantity for s in selections if s[2]) <= budget else cheap_selections
-
-        # Paso 2: Ordenar por prioridad y costo (excluir opcionales caros primero)
-        sorted_selections = sorted(
-            cheap_selections,
-            key=lambda s: (-s[0].priority, s[2].price * s[0].quantity if s[2] else 0)
-        )
-
-        # Paso 3: Incluir items hasta llenar presupuesto (knapsack greedy)
-        included = []
-        current_cost = 0
-
-        # Ordenar por valor (prioridad) / peso (costo) - ratio de eficiencia
+        # Paso 3: No cabe todo, usar knapsack greedy para seleccionar items
+        # Ordenar por eficiencia: prioridad / costo
         def efficiency_ratio(sel):
             item, _, product, _ = sel
             if not product:
@@ -228,6 +262,10 @@ class MultiObjectiveKnapsackOptimizer:
 
         sorted_by_efficiency = sorted(cheap_selections, key=efficiency_ratio, reverse=True)
 
+        # Incluir items hasta llenar presupuesto
+        included = []
+        current_cost = 0
+
         for sel in sorted_by_efficiency:
             item, candidates, product, default = sel
             if product:
@@ -236,7 +274,47 @@ class MultiObjectiveKnapsackOptimizer:
                     current_cost += item_cost
                     included.append(sel)
 
-        return included
+        # Intentar mejorar las selecciones incluidas
+        return self._upgrade_selections(included, budget, selections)
+
+    def _upgrade_selections(
+        self,
+        cheap_selections: List[Tuple[ShoppingListItem, List[Product], Product, Product]],
+        budget: float,
+        original_selections: List[Tuple[ShoppingListItem, List[Product], Product, Product]]
+    ) -> List[Tuple[ShoppingListItem, List[Product], Product, Product]]:
+        """
+        Intenta mejorar las selecciones baratas usando el presupuesto restante.
+        Reemplaza variantes baratas por las óptimas originales cuando sea posible.
+        """
+        # Crear mapa de selecciones originales por nombre de producto
+        original_map = {}
+        for item, candidates, best, default in original_selections:
+            original_map[item.product_name] = (item, candidates, best, default)
+
+        # Calcular costo actual
+        current_cost = sum(sel[2].price * sel[0].quantity for sel in cheap_selections if sel[2])
+        remaining_budget = budget - current_cost
+
+        # Intentar upgrades ordenados por prioridad
+        upgraded = []
+        for item, candidates, cheap_product, default in sorted(cheap_selections, key=lambda s: s[0].priority):
+            original = original_map.get(item.product_name)
+            if original and original[2] and cheap_product:
+                best_product = original[2]
+                upgrade_cost = (best_product.price - cheap_product.price) * item.quantity
+
+                if upgrade_cost <= remaining_budget and upgrade_cost > 0:
+                    # Upgrade a la variante óptima
+                    upgraded.append((item, candidates, best_product, default))
+                    remaining_budget -= upgrade_cost
+                else:
+                    # Mantener variante barata
+                    upgraded.append((item, candidates, cheap_product, default))
+            else:
+                upgraded.append((item, candidates, cheap_product, default))
+
+        return upgraded
 
     def _optimize_essentials_for_budget(
         self,
@@ -335,6 +413,11 @@ class MultiObjectiveKnapsackOptimizer:
             store_counts[store] = store_counts.get(store, 0) + 1
         recommended_stores = sorted(store_counts.keys(), key=lambda s: store_counts[s], reverse=True)
 
+        # Calcular oportunidades de ahorro
+        savings_opportunities = self._calculate_savings_opportunities(
+            optimized_items, selections, shopping_list.optimize_for
+        )
+
         return OptimizedShoppingList(
             original_list=shopping_list,
             optimized_items=optimized_items,
@@ -353,7 +436,76 @@ class MultiObjectiveKnapsackOptimizer:
             optimization_score=round(overall_sustainability.overall_score, 2),
             recommended_stores=recommended_stores[:3],
             estimated_shopping_time=len(recommended_stores) * 15 + len(optimized_items) * 2,
+            savings_opportunities=savings_opportunities,
         )
+
+    def _calculate_savings_opportunities(
+        self,
+        optimized_items: List[OptimizedProduct],
+        selections: List[Tuple[ShoppingListItem, List[Product], Product, Product]],
+        optimize_for: str
+    ) -> List[SavingsOpportunity]:
+        """
+        Calcula oportunidades de ahorro mostrando alternativas más baratas.
+        """
+        opportunities = []
+
+        for opt_item in optimized_items:
+            selected = opt_item.selected_product
+            alternatives = opt_item.alternatives
+
+            # Buscar alternativa más barata
+            cheaper_alternatives = [
+                alt for alt in alternatives
+                if alt.price < selected.price
+            ]
+
+            if cheaper_alternatives:
+                # Ordenar por precio y tomar la más barata
+                best_alternative = min(cheaper_alternatives, key=lambda p: p.price)
+                savings = selected.price - best_alternative.price
+                savings_pct = (savings / selected.price * 100) if selected.price > 0 else 0
+
+                # Generar razón
+                if optimize_for in ["sustainability", "health"]:
+                    reason = f"Alternativa más económica (priorizaste {optimize_for})"
+                else:
+                    reason = "Opción más económica disponible"
+
+                opportunities.append(SavingsOpportunity(
+                    current_product=selected,
+                    better_alternative=best_alternative,
+                    savings=round(savings, 2),
+                    savings_percentage=round(savings_pct, 1),
+                    reason=reason
+                ))
+            else:
+                # Si no hay alternativa más barata, buscar mejor sostenibilidad
+                if optimize_for == "price":
+                    more_sustainable = [
+                        alt for alt in alternatives
+                        if self.scorer.calculate_score(alt).overall_score >
+                           self.scorer.calculate_score(selected).overall_score
+                    ]
+                    if more_sustainable:
+                        best_alt = max(more_sustainable,
+                                      key=lambda p: self.scorer.calculate_score(p).overall_score)
+                        alt_score = self.scorer.calculate_score(best_alt)
+                        sel_score = self.scorer.calculate_score(selected)
+                        improvement = alt_score.overall_score - sel_score.overall_score
+
+                        opportunities.append(SavingsOpportunity(
+                            current_product=selected,
+                            better_alternative=best_alt,
+                            savings=round(selected.price - best_alt.price, 2),
+                            savings_percentage=round(improvement, 1),
+                            reason=f"Más sostenible (+{improvement:.0f} puntos)"
+                        ))
+
+        # Ordenar por ahorro descendente
+        opportunities.sort(key=lambda x: x.savings, reverse=True)
+
+        return opportunities[:5]  # Retornar top 5
 
     def _generate_reason(self, product: Product, sus_score: SustainabilityScore, optimize_for: str) -> str:
         """Genera razón clara de la selección"""

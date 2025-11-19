@@ -89,12 +89,12 @@ async def quick_optimize(request: QuickOptimizeRequest):
     not_found = []
 
     for name in request.product_names:
-        # Buscar el producto
+        # Buscar el producto para obtener la categoría
         results = product_service.search_products(query=name)
         if results:
             product = results[0]
+            # NO fijar product_id para que el optimizador encuentre todas las variantes
             item = ShoppingListItem(
-                product_id=product.id,
                 product_name=name,
                 category=product.category,
                 quantity=1.0,

@@ -24,6 +24,15 @@ class ShoppingList(BaseModel):
     store_preference: Optional[List[str]] = None
 
 
+class SavingsOpportunity(BaseModel):
+    """A savings opportunity showing a better alternative"""
+    current_product: Product
+    better_alternative: Product
+    savings: float
+    savings_percentage: float
+    reason: str = ""
+
+
 class OptimizedProduct(BaseModel):
     """Optimized product selection for shopping list"""
     original_item: ShoppingListItem
@@ -63,5 +72,8 @@ class OptimizedShoppingList(BaseModel):
     # Warnings and feedback
     warnings: List[str] = []
     items_not_found: List[str] = []
+
+    # Savings opportunities
+    savings_opportunities: List[SavingsOpportunity] = []
 
     created_at: datetime = Field(default_factory=datetime.now)
