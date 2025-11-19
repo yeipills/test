@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { shoppingListAPI, productsAPI } from '../services/api';
-import { ShoppingCart, Plus, Trash2, Sparkles, DollarSign, Leaf, BarChart3, MapPin, Download, Store, Recycle, Heart, Award } from 'lucide-react';
+import { ShoppingCart, Plus, Trash2, Sparkles, DollarSign, Leaf, BarChart3, MapPin, Download, Store, Recycle, Heart, Award, ChevronDown, ChevronUp, ArrowRightLeft } from 'lucide-react';
 import { useToast } from './Toast';
 import { useNavigation } from '../App';
 
@@ -17,6 +17,7 @@ export default function ShoppingListOptimizer() {
   const [allProducts, setAllProducts] = useState([]);
   const [suggestions, setSuggestions] = useState({});
   const [activeInput, setActiveInput] = useState(null);
+  const [expandedAlternatives, setExpandedAlternatives] = useState({});
 
   useEffect(() => {
     loadCategories();
@@ -159,6 +160,44 @@ export default function ShoppingListOptimizer() {
     if (score >= 75) return '#10b981';
     if (score >= 50) return '#f59e0b';
     return '#ef4444';
+  };
+
+  // Toggle alternatives view for a product
+  const toggleAlternatives = (index) => {
+    setExpandedAlternatives(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  // Swap selected product with an alternative
+  const swapWithAlternative = (itemIndex, alternative) => {
+    if (!result) return;
+
+    const newResult = { ...result };
+    const item = newResult.optimized_items[itemIndex];
+    const oldSelected = item.selected_product;
+
+    // Swap selected with alternative
+    item.selected_product = alternative;
+    item.alternatives = [
+      oldSelected,
+      ...item.alternatives.filter(a => a.id !== alternative.id)
+    ].slice(0, 3);
+
+    // Recalculate savings
+    const maxPrice = Math.max(oldSelected.price, alternative.price, ...item.alternatives.map(a => a.price));
+    item.savings = Math.max(0, maxPrice - alternative.price);
+
+    // Recalculate totals
+    const totalCost = newResult.optimized_items.reduce(
+      (sum, i) => sum + (i.selected_product.price * (i.original_item?.quantity || 1)),
+      0
+    );
+    newResult.total_cost = totalCost;
+
+    setResult(newResult);
+    toast.info(`Cambiado a ${alternative.name}`);
   };
 
   return (
@@ -608,9 +647,161 @@ export default function ShoppingListOptimizer() {
                     {item.reason}
                   </div>
 
+                  {/* Alternatives comparison section */}
                   {item.alternatives.length > 0 && (
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                      +{item.alternatives.length} alternativa(s) disponible(s)
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <button
+                        onClick={() => toggleAlternatives(index)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          fontSize: '0.8rem',
+                          color: '#3b82f6',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '0.25rem 0',
+                          fontWeight: '500',
+                        }}
+                      >
+                        {expandedAlternatives[index] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        Comparar con {item.alternatives.length} alternativa(s)
+                      </button>
+
+                      {expandedAlternatives[index] && (
+                        <div style={{
+                          marginTop: '0.75rem',
+                          padding: '0.75rem',
+                          background: '#f9fafb',
+                          borderRadius: '0.5rem',
+                          border: '1px solid #e5e7eb',
+                        }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                            Alternativas disponibles:
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {item.alternatives.map((alt, altIndex) => {
+                              const priceDiff = alt.price - item.selected_product.price;
+                              const isMoreExpensive = priceDiff > 0;
+
+                              return (
+                                <div
+                                  key={alt.id || altIndex}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '0.5rem',
+                                    background: 'white',
+                                    borderRadius: '0.375rem',
+                                    border: '1px solid #e5e7eb',
+                                  }}
+                                >
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontWeight: '500', fontSize: '0.85rem', marginBottom: '0.125rem' }}>
+                                      {alt.name}
+                                    </div>
+                                    {alt.brand && (
+                                      <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>
+                                        {alt.brand}
+                                      </div>
+                                    )}
+
+                                    {/* Store and labels */}
+                                    <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
+                                      {alt.store && (
+                                        <span style={{
+                                          fontSize: '0.6rem',
+                                          color: '#6b7280',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '0.15rem'
+                                        }}>
+                                          <Store size={8} />
+                                          {alt.store}
+                                        </span>
+                                      )}
+                                      {alt.labels && alt.labels.includes('organic') && (
+                                        <span style={{
+                                          fontSize: '0.55rem',
+                                          background: '#d1fae5',
+                                          color: '#065f46',
+                                          padding: '0.1rem 0.25rem',
+                                          borderRadius: '9999px'
+                                        }}>
+                                          Orgánico
+                                        </span>
+                                      )}
+                                      {alt.sustainability?.local_product && (
+                                        <span style={{
+                                          fontSize: '0.55rem',
+                                          background: '#dbeafe',
+                                          color: '#1e40af',
+                                          padding: '0.1rem 0.25rem',
+                                          borderRadius: '9999px'
+                                        }}>
+                                          Local
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem' }}>
+                                    <div style={{ textAlign: 'right' }}>
+                                      <div style={{ fontWeight: '600', fontSize: '0.9rem', color: '#111827' }}>
+                                        ${alt.price}
+                                      </div>
+                                      <div style={{
+                                        fontSize: '0.65rem',
+                                        color: isMoreExpensive ? '#ef4444' : '#10b981',
+                                        fontWeight: '500'
+                                      }}>
+                                        {isMoreExpensive ? '+' : ''}{priceDiff !== 0 ? `$${priceDiff.toFixed(0)}` : 'Igual'}
+                                      </div>
+                                    </div>
+
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        swapWithAlternative(index, alt);
+                                      }}
+                                      style={{
+                                        padding: '0.35rem 0.5rem',
+                                        background: '#3b82f6',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '0.25rem',
+                                        fontSize: '0.65rem',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.2rem',
+                                        fontWeight: '500',
+                                      }}
+                                      title="Cambiar por esta alternativa"
+                                    >
+                                      <ArrowRightLeft size={10} />
+                                      Elegir
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Current selection indicator */}
+                          <div style={{
+                            marginTop: '0.5rem',
+                            fontSize: '0.7rem',
+                            color: '#6b7280',
+                            fontStyle: 'italic'
+                          }}>
+                            Selección actual: {item.selected_product.name} - ${item.selected_product.price}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
