@@ -218,66 +218,137 @@ export default function ProductSearch() {
         Productos y Tiendas
       </h1>
 
-      {/* Split Layout */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-        gap: '1rem',
-        marginBottom: '1rem'
-      }}>
-        {/* Left: Search */}
-        <div className="card" style={{ marginBottom: 0 }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Search size={18} />
-            Buscar Productos
-          </h2>
-
-          {/* Search by Name */}
-          <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Buscar producto..."
-                value={searchQuery}
-                onChange={(e) => handleQueryChange(e.target.value)}
-              />
-              <select
-                className="form-select"
-                value={selectedCategory}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-                style={{ maxWidth: '150px' }}
-              >
-                <option value="">Todas</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Search by Barcode */}
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Código de barras..."
-                value={barcode}
-                onChange={(e) => setBarcode(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleBarcodeSearch()}
-              />
-              <button className="btn btn-primary" onClick={handleBarcodeSearch} style={{ padding: '0.5rem 0.75rem' }}>
-                <Barcode size={16} />
-              </button>
-            </div>
+      {/* Search Bar - Full Width */}
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Buscar producto..."
+            value={searchQuery}
+            onChange={(e) => handleQueryChange(e.target.value)}
+            style={{ flex: '1', minWidth: '200px' }}
+          />
+          <select
+            className="form-select"
+            value={selectedCategory}
+            onChange={(e) => handleCategoryChange(e.target.value)}
+            style={{ width: '150px' }}
+          >
+            <option value="">Todas</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Código de barras..."
+              value={barcode}
+              onChange={(e) => setBarcode(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleBarcodeSearch()}
+              style={{ width: '150px' }}
+            />
+            <button className="btn btn-primary" onClick={handleBarcodeSearch} style={{ padding: '0.5rem 0.75rem' }}>
+              <Barcode size={16} />
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Right: Map */}
-        <div className="card" style={{ marginBottom: 0, padding: '0.75rem' }}>
+      {/* Three Column Layout */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 350px',
+        gap: '1rem',
+        alignItems: 'start'
+      }}>
+        {/* Products Grid - 2 columns */}
+        <div style={{ gridColumn: 'span 2' }}>
+          {loading ? (
+            <div className="loading">
+              <div className="spinner"></div>
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: '0.75rem'
+            }}>
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="product-card"
+                  onClick={() => handleProductClick(product)}
+                >
+                  <div className="product-header">
+                    <div>
+                      <div className="product-name">{product.name}</div>
+                      {product.brand && <div className="product-brand">{product.brand}</div>}
+                    </div>
+                    <div className="product-price">${product.price}</div>
+                  </div>
+
+                  <div className="product-category">{product.category}</div>
+
+                  {product.store && (
+                    <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <Store size={10} />
+                      {product.store}
+                    </div>
+                  )}
+
+                  {product.labels && product.labels.length > 0 && (
+                    <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                      {product.labels.slice(0, 3).map((label) => (
+                        <span key={label} className="badge badge-info">
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {product.sustainability && (
+                    <div style={{ marginTop: '0.75rem', fontSize: '0.875rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: '#6b7280' }}>Sostenibilidad</span>
+                        <span
+                          style={{
+                            fontWeight: '600',
+                            color: getSustainabilityColor(product.sustainability.overall_score),
+                          }}
+                        >
+                          {product.sustainability.overall_score}/100
+                        </span>
+                      </div>
+                      <div className="score-bar" style={{ marginTop: '0.25rem' }}>
+                        <div
+                          className="score-fill"
+                          style={{
+                            width: `${product.sustainability.overall_score}%`,
+                            background: getSustainabilityColor(product.sustainability.overall_score),
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {products.length === 0 && !loading && (
+            <div className="card" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+              No se encontraron productos
+            </div>
+          )}
+        </div>
+
+        {/* Map Sidebar - Right Column */}
+        <div className="card" style={{ marginBottom: 0, padding: '0.75rem', position: 'sticky', top: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <MapPin size={18} />
@@ -301,7 +372,7 @@ export default function ProductSearch() {
 
           {!hasApiKey ? (
             <div style={{
-              height: '200px',
+              height: '250px',
               background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
               display: 'flex',
               flexDirection: 'column',
@@ -316,11 +387,11 @@ export default function ProductSearch() {
               </div>
             </div>
           ) : !isLoaded ? (
-            <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div className="spinner"></div>
             </div>
           ) : (
-            <div style={{ height: '200px', borderRadius: '0.5rem', overflow: 'hidden' }}>
+            <div style={{ height: '250px', borderRadius: '0.5rem', overflow: 'hidden' }}>
               <GoogleMap
                 mapContainerStyle={{ width: '100%', height: '100%' }}
                 center={userLocation || center}
@@ -388,112 +459,53 @@ export default function ProductSearch() {
 
           {/* Store List */}
           {stores.length > 0 && (
-            <div style={{ marginTop: '0.5rem', maxHeight: '120px', overflowY: 'auto' }}>
-              {stores.slice(0, 3).map((store) => (
-                <div
-                  key={store.id}
-                  style={{
-                    padding: '0.5rem',
-                    background: '#f9fafb',
-                    borderRadius: '0.375rem',
-                    marginBottom: '0.35rem',
-                    fontSize: '0.75rem',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    if (map) {
-                      map.panTo({ lat: store.lat, lng: store.lng });
-                      map.setZoom(16);
-                    }
-                    setInfoWindowStore(store);
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: '500' }}>{store.name}</span>
-                    <span style={{ color: '#3b82f6', fontWeight: '600' }}>{store.distance} km</span>
+            <div style={{ marginTop: '0.75rem' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>
+                Tiendas ({stores.length})
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '200px', overflowY: 'auto' }}>
+                {stores.slice(0, 5).map((store) => (
+                  <div
+                    key={store.id}
+                    style={{
+                      padding: '0.5rem',
+                      background: '#f9fafb',
+                      borderRadius: '0.375rem',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      border: '1px solid #e5e7eb',
+                      transition: 'border-color 0.2s'
+                    }}
+                    onClick={() => {
+                      if (map) {
+                        map.panTo({ lat: store.lat, lng: store.lng });
+                        map.setZoom(16);
+                      }
+                      setInfoWindowStore(store);
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                      <span style={{ fontWeight: '500' }}>{store.name}</span>
+                      <span style={{ color: '#3b82f6', fontWeight: '600' }}>{store.distance} km</span>
+                    </div>
+                    {store.is_open !== null && store.is_open !== undefined && (
+                      <div style={{ fontSize: '0.65rem', color: store.is_open ? '#10b981' : '#ef4444' }}>
+                        {store.is_open ? '● Abierto' : '● Cerrado'}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!userLocation && (
+            <div style={{ marginTop: '0.75rem', textAlign: 'center', fontSize: '0.75rem', color: '#6b7280' }}>
+              Haz clic en "Ubicación" para ver tiendas cercanas
             </div>
           )}
         </div>
       </div>
-
-      {/* Products Grid */}
-      {loading ? (
-        <div className="loading">
-          <div className="spinner"></div>
-        </div>
-      ) : (
-        <div className="wide-grid-4">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="product-card"
-              onClick={() => handleProductClick(product)}
-            >
-              <div className="product-header">
-                <div>
-                  <div className="product-name">{product.name}</div>
-                  {product.brand && <div className="product-brand">{product.brand}</div>}
-                </div>
-                <div className="product-price">${product.price}</div>
-              </div>
-
-              <div className="product-category">{product.category}</div>
-
-              {/* Store info */}
-              {product.store && (
-                <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <Store size={10} />
-                  {product.store}
-                </div>
-              )}
-
-              {product.labels && product.labels.length > 0 && (
-                <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                  {product.labels.slice(0, 3).map((label) => (
-                    <span key={label} className="badge badge-info">
-                      {label}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {product.sustainability && (
-                <div style={{ marginTop: '0.75rem', fontSize: '0.875rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#6b7280' }}>Sostenibilidad</span>
-                    <span
-                      style={{
-                        fontWeight: '600',
-                        color: getSustainabilityColor(product.sustainability.overall_score),
-                      }}
-                    >
-                      {product.sustainability.overall_score}/100
-                    </span>
-                  </div>
-                  <div className="score-bar" style={{ marginTop: '0.25rem' }}>
-                    <div
-                      className="score-fill"
-                      style={{
-                        width: `${product.sustainability.overall_score}%`,
-                        background: getSustainabilityColor(product.sustainability.overall_score),
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {products.length === 0 && !loading && (
-        <div className="card" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-          No se encontraron productos
-        </div>
-      )}
 
       {/* Product Analysis Modal */}
       {selectedProduct && analysis && (
