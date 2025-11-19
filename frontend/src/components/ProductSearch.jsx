@@ -262,27 +262,27 @@ export default function ProductSearch() {
       {/* Three Column Layout */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 350px',
+        gridTemplateColumns: '1fr 1fr 300px',
         gap: '1rem',
         alignItems: 'start'
       }}>
-        {/* Products Grid - 2 columns */}
-        <div style={{ gridColumn: 'span 2' }}>
+        {/* Products Column 1 */}
+        <div className="card" style={{ marginBottom: 0, padding: '0.75rem' }}>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem', color: '#374151' }}>
+            Productos ({products.filter((_, i) => i % 2 === 0).length})
+          </h3>
           {loading ? (
             <div className="loading">
               <div className="spinner"></div>
             </div>
           ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-              gap: '0.75rem'
-            }}>
-              {products.map((product) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {products.filter((_, i) => i % 2 === 0).map((product) => (
                 <div
                   key={product.id}
                   className="product-card"
                   onClick={() => handleProductClick(product)}
+                  style={{ marginBottom: 0 }}
                 >
                   <div className="product-header">
                     <div>
@@ -291,48 +291,55 @@ export default function ProductSearch() {
                     </div>
                     <div className="product-price">${product.price}</div>
                   </div>
-
                   <div className="product-category">{product.category}</div>
-
-                  {product.store && (
-                    <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Store size={10} />
-                      {product.store}
-                    </div>
-                  )}
-
                   {product.labels && product.labels.length > 0 && (
                     <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                      {product.labels.slice(0, 3).map((label) => (
-                        <span key={label} className="badge badge-info">
+                      {product.labels.slice(0, 2).map((label) => (
+                        <span key={label} className="badge badge-info" style={{ fontSize: '0.6rem' }}>
                           {label}
                         </span>
                       ))}
                     </div>
                   )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-                  {product.sustainability && (
-                    <div style={{ marginTop: '0.75rem', fontSize: '0.875rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#6b7280' }}>Sostenibilidad</span>
-                        <span
-                          style={{
-                            fontWeight: '600',
-                            color: getSustainabilityColor(product.sustainability.overall_score),
-                          }}
-                        >
-                          {product.sustainability.overall_score}/100
+        {/* Products Column 2 */}
+        <div className="card" style={{ marginBottom: 0, padding: '0.75rem' }}>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem', color: '#374151' }}>
+            Continuación
+          </h3>
+          {loading ? (
+            <div className="loading">
+              <div className="spinner"></div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {products.filter((_, i) => i % 2 === 1).map((product) => (
+                <div
+                  key={product.id}
+                  className="product-card"
+                  onClick={() => handleProductClick(product)}
+                  style={{ marginBottom: 0 }}
+                >
+                  <div className="product-header">
+                    <div>
+                      <div className="product-name">{product.name}</div>
+                      {product.brand && <div className="product-brand">{product.brand}</div>}
+                    </div>
+                    <div className="product-price">${product.price}</div>
+                  </div>
+                  <div className="product-category">{product.category}</div>
+                  {product.labels && product.labels.length > 0 && (
+                    <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                      {product.labels.slice(0, 2).map((label) => (
+                        <span key={label} className="badge badge-info" style={{ fontSize: '0.6rem' }}>
+                          {label}
                         </span>
-                      </div>
-                      <div className="score-bar" style={{ marginTop: '0.25rem' }}>
-                        <div
-                          className="score-fill"
-                          style={{
-                            width: `${product.sustainability.overall_score}%`,
-                            background: getSustainabilityColor(product.sustainability.overall_score),
-                          }}
-                        ></div>
-                      </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -341,13 +348,13 @@ export default function ProductSearch() {
           )}
 
           {products.length === 0 && !loading && (
-            <div className="card" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+            <div style={{ textAlign: 'center', padding: '1rem', color: '#6b7280', fontSize: '0.85rem' }}>
               No se encontraron productos
             </div>
           )}
         </div>
 
-        {/* Map Sidebar - Right Column */}
+        {/* Map Column 3 */}
         <div className="card" style={{ marginBottom: 0, padding: '0.75rem', position: 'sticky', top: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <h2 style={{ fontSize: '1rem', fontWeight: '600', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
