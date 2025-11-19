@@ -178,8 +178,10 @@ export default function StoreMap() {
         </div>
       </div>
 
-      {/* Google Map */}
-      <div className="card" style={{ marginBottom: '1rem', padding: 0, overflow: 'hidden' }}>
+      {/* Main Content - Two columns on large screens */}
+      <div className="wide-grid-2" style={{ alignItems: 'start' }}>
+        {/* Google Map */}
+        <div className="card" style={{ marginBottom: 0, padding: 0, overflow: 'hidden' }}>
         {loadError && (
           <div style={{ padding: '2rem', textAlign: 'center', color: '#ef4444' }}>
             <AlertCircle size={32} style={{ marginBottom: '0.5rem' }} />
@@ -299,7 +301,7 @@ export default function StoreMap() {
       </div>
 
       {/* Store List */}
-      <div className="card">
+      <div className="card" style={{ marginBottom: 0 }}>
         <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Store size={18} style={{ color: '#3b82f6' }} />
           Tiendas ({filteredStores.length})
@@ -395,6 +397,7 @@ export default function StoreMap() {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

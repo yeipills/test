@@ -111,10 +111,10 @@ export default function Dashboard() {
 
       {stats && (
         <>
-          {/* Main Stats Grid - 2x3 layout */}
-          <div style={{
+          {/* Main Stats Grid - 6 columns on large screens */}
+          <div className="stats-row" style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(6, 1fr)',
             gap: '0.75rem',
             marginBottom: '1rem'
           }}>
@@ -201,12 +201,7 @@ export default function Dashboard() {
           </div>
 
           {/* Charts Section - Two columns */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '1rem',
-            marginBottom: '1rem'
-          }}>
+          <div className="wide-grid-2" style={{ marginBottom: '1rem' }}>
             {/* Categories Distribution */}
             <div className="card" style={{ marginBottom: 0 }}>
               <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: '#374151' }}>
@@ -374,11 +369,7 @@ export default function Dashboard() {
           )}
 
           {/* Product Rankings - Two columns */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1rem'
-          }}>
+          <div className="wide-grid-2">
             {/* Top Sustainable */}
             <div className="card" style={{ marginBottom: 0 }}>
               <h2 style={{

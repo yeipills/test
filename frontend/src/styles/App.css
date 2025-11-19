@@ -302,6 +302,29 @@ body {
   }
 }
 
+/* Dashboard Stats Row */
+.stats-row {
+  grid-template-columns: repeat(6, 1fr) !important;
+}
+
+@media (max-width: 1400px) {
+  .stats-row {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* Product Card */
 .product-card {
   background: white;
