@@ -824,6 +824,62 @@ Ver [LICENSE](LICENSE) para detalles completos.
 
 ---
 
+## 💡 Innovaciones Más Allá de los Requisitos
+
+Además de cumplir con todos los requisitos obligatorios y bonus del desafío, se implementaron las siguientes innovaciones para mejorar la experiencia de usuario y desarrollador:
+
+### Experiencia de Usuario
+
+1. **Comparación Inline de Alternativas**
+   - El optimizador muestra alternativas directamente en los resultados
+   - Cada producto incluye comparación visual de opciones más económicas o sostenibles
+
+2. **Mapa Interactivo Avanzado**
+   - Filtros por tipo de tienda (orgánicos, locales)
+   - Estado en tiempo real (abierto/cerrado)
+   - Integración directa con Google Maps para direcciones
+
+3. **Búsqueda Inteligente**
+   - Múltiples filtros simultáneos (categoría, precio, sostenibilidad)
+   - Resultados con análisis detallado y recomendaciones contextuales
+
+### APIs y Backend
+
+4. **Endpoints Extendidos de Recomendaciones**
+   - `/savings-opportunities`: Identifica productos con mayor potencial de ahorro
+   - `/best-value`: Encuentra mejores relaciones precio-valor
+   - `/top-sustainable`: Rankings de sostenibilidad por categoría
+
+5. **Quick Optimize**
+   - Optimización simplificada con solo nombres de productos (sin IDs)
+   - Facilita la integración con otros sistemas
+
+6. **Sistema de Caché Redis**
+   - Optimización de rendimiento para consultas frecuentes
+   - Reducción de carga en base de datos
+
+### Experiencia de Desarrollador
+
+7. **Scripts de Automatización**
+   - Helper scripts para todas las plataformas (`start.sh`, `stop.sh`, scripts Windows, Makefile)
+   - Comandos unificados para operaciones comunes
+
+8. **Documentación Extendida**
+   - `DEPLOYMENT.md` con guía completa de producción
+   - Documentación algorítmica detallada con complejidad y ejemplos
+   - Guía de desarrollo local con troubleshooting
+
+9. **Seguridad en Producción**
+   - SSL/TLS con Let's Encrypt
+   - Ports binding seguros (127.0.0.1)
+   - Configuración nginx optimizada
+
+### Impacto
+
+Estas innovaciones transforman un proyecto de test técnico en una **aplicación production-ready** que considera tanto la experiencia del usuario final como del equipo de desarrollo.
+
+---
+
 ## 🤖 Uso de IA en el Desarrollo
 
 Este proyecto fue desarrollado con asistencia de **Claude (Anthropic)** como herramienta de pair programming. La IA asistió en:
