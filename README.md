@@ -27,21 +27,25 @@ Plataforma full-stack de retail inteligente que ayuda a los consumidores a ahorr
 ### Core Features (Obligatorias)
 
 ✅ **Sistema de Análisis de Productos**
+
 - Búsqueda y escaneo de productos por código de barras
 - Análisis multi-dimensional de sostenibilidad
 - Integración con Open Food Facts API
 
 ✅ **Optimización de Listas de Compras Multi-criterio**
+
 - Algoritmo de mochila multi-objetivo
 - Balance entre precio, sostenibilidad y preferencias
 - Respeto de restricciones de presupuesto
 
 ✅ **Cálculo de Ahorros e Impacto Ambiental**
+
 - Estimación de ahorro económico
 - Huella de carbono por producto
 - Uso de agua y reciclabilidad
 
 ✅ **Sistema de Recomendaciones de Sustitución**
+
 - Motor de sustitución inteligente
 - Comparación multi-dimensional de alternativas
 - Análisis de trade-offs
@@ -49,11 +53,13 @@ Plataforma full-stack de retail inteligente que ayuda a los consumidores a ahorr
 ### Frontend Features
 
 ✅ **Escáner de Productos**
+
 - Búsqueda por nombre y código de barras
 - Filtros por categoría, precio y labels
 - Análisis detallado de productos
 
 ✅ **Generador de Listas Optimizadas**
+
 - Templates de compras predefinidos
 - Configuración de presupuesto y preferencias
 - Visualización de resultados de optimización
@@ -61,22 +67,26 @@ Plataforma full-stack de retail inteligente que ayuda a los consumidores a ahorr
 ### Bonus Features Implementadas
 
 🎁 **Dashboard de Ahorros e Impacto**
+
 - Estadísticas del catálogo
 - Top productos sostenibles
 - Oportunidades de ahorro identificadas
 - Mejor relación calidad-precio
 
 🎁 **Comparador de Productos**
+
 - Comparación lado a lado hasta 4 productos
 - Tabla comparativa detallada
 - Identificación de mejores opciones
 
 🎁 **Docker + Docker Compose**
+
 - Containerización completa
 - Orquestación de servicios
 - Fácil despliegue
 
 🎁 **PWA (Progressive Web App)**
+
 - Manifest configurado
 - Capacidades offline (parciales)
 - Instalable en dispositivos móviles
@@ -86,22 +96,26 @@ Plataforma full-stack de retail inteligente que ayuda a los consumidores a ahorr
 ## 🛠 Stack Tecnológico
 
 ### Backend
+
 - **Python 3.11** con **FastAPI**
 - **Pydantic** para validación de datos
 - **aiohttp** para requests asíncronas
 - **NumPy/SciPy** para algoritmos de optimización
 
 ### Frontend
+
 - **React 18** con **Vite**
 - **Lucide React** para iconos
 - **Recharts** para visualizaciones (preparado)
 - **Axios** para API calls
 
 ### Base de Datos
+
 - **JSON** (archivo plano para dataset)
 - Fácilmente migrable a PostgreSQL/SQLite
 
 ### DevOps
+
 - **Docker** & **Docker Compose**
 - **Nginx** para servir frontend
 - **Uvicorn** ASGI server
@@ -123,6 +137,7 @@ Implementación de un algoritmo genético para resolver el problema de la mochil
 - **Maximizar satisfacción** de preferencias del usuario
 
 **Técnicas utilizadas:**
+
 - Algoritmo Genético con población de 50 individuos
 - Selección por torneo (tournament selection)
 - Crossover de un punto
@@ -130,12 +145,14 @@ Implementación de un algoritmo genético para resolver el problema de la mochil
 - Elitismo (mantiene top 20% de mejores soluciones)
 - Función de fitness ponderada configurable
 
-**Complejidad:** O(n * p * g) donde:
+**Complejidad:** O(n _ p _ g) donde:
+
 - n = número de items
 - p = tamaño de población
 - g = número de generaciones
 
 **Ejemplo de uso:**
+
 ```python
 optimizer = MultiObjectiveKnapsackOptimizer()
 result = optimizer.optimize(shopping_list, available_products)
@@ -153,16 +170,19 @@ Sistema de evaluación multi-dimensional que calcula scores de sostenibilidad co
 #### Dimensiones evaluadas:
 
 1. **Score Económico (30%)**
+
    - Eficiencia de precio (menor precio = mayor score)
    - Valor por dinero (cantidad por precio)
 
 2. **Score Ambiental (30%)**
+
    - Huella de carbono (kg CO₂)
    - Uso de agua (litros)
    - Packaging reciclable
    - Labels ecológicas (organic, eco, sustainable)
 
 3. **Score Social (20%)**
+
    - Comercio justo (fair trade)
    - Producción local
    - Certificaciones éticas
@@ -174,6 +194,7 @@ Sistema de evaluación multi-dimensional que calcula scores de sostenibilidad co
    - Alérgenos
 
 **Fórmula:**
+
 ```
 Overall Score = (Economic * 0.30) + (Environmental * 0.30) + (Social * 0.20) + (Health * 0.20)
 ```
@@ -183,6 +204,7 @@ Los pesos son configurables según preferencias del usuario.
 **Normalización:** Min-Max scaling a rango [0, 100]
 
 **Ejemplo de uso:**
+
 ```python
 scorer = SustainabilityScorer()
 score = scorer.calculate_score(product)
@@ -201,6 +223,7 @@ Algoritmo de recomendación que encuentra sustitutos óptimos para productos bas
 #### Proceso de sustitución:
 
 1. **Cálculo de Similitud** (0-1 score)
+
    - Categoría exacta o similar (40%)
    - Marca (10%)
    - Labels comunes (20%)
@@ -208,17 +231,20 @@ Algoritmo de recomendación que encuentra sustitutos óptimos para productos bas
    - Rango de precio similar (15%)
 
 2. **Evaluación de Mejoras**
+
    - Diferencia de precio
    - Mejora en sostenibilidad
    - Mejora en salud
 
 3. **Score de Sustitución**
+
    ```
    Substitution Score = w1*price_improvement + w2*sustainability_improvement +
                        w3*health_improvement + w4*similarity
    ```
 
 4. **Clasificación de Sustituciones**
+
    - `same_product_different_brand`: Mismo producto, marca diferente
    - `similar_category`: Categoría similar, características parecidas
    - `healthier_alternative`: Alternativa más saludable
@@ -232,6 +258,7 @@ Algoritmo de recomendación que encuentra sustitutos óptimos para productos bas
 El algoritmo identifica y comunica trade-offs (ej: "Costo adicional de $500" vs "Mejor perfil nutricional")
 
 **Ejemplo de uso:**
+
 ```python
 engine = IntelligentSubstitutionEngine()
 suggestions = engine.find_substitutions(
@@ -326,21 +353,21 @@ liquiverde/
 
 ### Documentación Técnica
 
-| Documento | Descripción |
-|-----------|-------------|
+| Documento                          | Descripción                                             |
+| ---------------------------------- | ------------------------------------------------------- |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Decisiones técnicas, patrones de diseño, flujo de datos |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Guía de contribución, estilo de código, proceso de PRs |
-| [LICENSE](LICENSE) | Licencia propietaria - Todos los derechos reservados |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Guía de contribución, estilo de código, proceso de PRs  |
+| [LICENSE](LICENSE)                 | Licencia propietaria - Todos los derechos reservados    |
 
 ### Documentación de Algoritmos
 
 Documentación detallada de los algoritmos en `backend/docs/algorithms/`:
 
-| Algoritmo | Documento | Contenido |
-|-----------|-----------|-----------|
-| Knapsack Optimizer | [knapsack_optimizer.md](backend/docs/algorithms/knapsack_optimizer.md) | Fases de ejecución, complejidad O(n×m), parámetros de tuning |
-| Sustainability Scorer | [sustainability_scorer.md](backend/docs/algorithms/sustainability_scorer.md) | Sistema de puntuación multi-dimensional, fórmulas, pesos |
-| Substitution Engine | [substitution_engine.md](backend/docs/algorithms/substitution_engine.md) | Cálculo de similitud, filtros, proceso de sustitución |
+| Algoritmo             | Documento                                                                    | Contenido                                                    |
+| --------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Knapsack Optimizer    | [knapsack_optimizer.md](backend/docs/algorithms/knapsack_optimizer.md)       | Fases de ejecución, complejidad O(n×m), parámetros de tuning |
+| Sustainability Scorer | [sustainability_scorer.md](backend/docs/algorithms/sustainability_scorer.md) | Sistema de puntuación multi-dimensional, fórmulas, pesos     |
+| Substitution Engine   | [substitution_engine.md](backend/docs/algorithms/substitution_engine.md)     | Cálculo de similitud, filtros, proceso de sustitución        |
 
 ---
 
@@ -349,10 +376,12 @@ Documentación detallada de los algoritmos en `backend/docs/algorithms/`:
 ### Opción 1: Docker Compose con Scripts (Recomendada - Más Fácil)
 
 **Requisitos:**
+
 - Docker 20.10+
 - Docker Compose 2.0+
 
 **Linux/Mac:**
+
 ```bash
 # 1. Clonar repositorio
 git clone <repo-url>
@@ -377,6 +406,7 @@ cd liquiverde
 ```
 
 **Windows:**
+
 ```cmd
 # 1. Clonar repositorio
 git clone <repo-url>
@@ -390,6 +420,7 @@ stop.bat
 ```
 
 **Con Makefile:**
+
 ```bash
 # Ver todos los comandos disponibles
 make help
@@ -428,6 +459,7 @@ docker-compose down
 ### Opción 3: Ejecución Local (Desarrollo)
 
 **Con Script Automático (Linux/Mac):**
+
 ```bash
 # Inicia backend y frontend automáticamente
 ./start-dev.sh
@@ -483,6 +515,7 @@ npm run dev
 ### Documentación Interactiva
 
 Una vez ejecutando el backend:
+
 - **Swagger UI:** http://localhost:8000/docs
 
 ### Endpoints Principales
@@ -620,6 +653,7 @@ GET /api/recommendations/savings-opportunities?min_savings_percentage=15
 ### Datos Realistas Chilenos
 
 El dataset incluye:
+
 - Productos de marcas chilenas reales (Colun, Soprole, Quillayes, etc.)
 - Precios en pesos chilenos (CLP)
 - Tiendas chilenas (Líder, Jumbo, Santa Isabel)
@@ -631,6 +665,7 @@ El dataset incluye:
 ## ✅ Funcionalidades Bonus Implementadas
 
 ### 1. Dashboard de Sostenibilidad ✅
+
 - Estadísticas del catálogo de productos
 - Top 5 productos más sostenibles
 - Productos con mejor relación calidad-precio
@@ -638,12 +673,14 @@ El dataset incluye:
 - Visualización de métricas clave
 
 ### 2. Comparador de Productos ✅
+
 - Comparación lado a lado de hasta 4 productos
 - Tabla comparativa detallada con todas las métricas
 - Identificación automática de mejores opciones (precio, sostenibilidad, salud)
 - Scores multi-dimensionales
 
 ### 3. Docker + Docker Compose ✅
+
 - Containerización completa del backend
 - Containerización completa del frontend con Nginx
 - Orquestación con docker-compose
@@ -651,17 +688,20 @@ El dataset incluye:
 - Fácil despliegue one-command
 
 ### 4. PWA (Progressive Web App) ✅
+
 - Configuración de manifest para instalación
 - Service worker preparado (via Vite PWA)
 - Capacidades offline básicas
 - Instalable en dispositivos móviles y desktop
 
 ### 5. Integración con APIs Externas ✅
+
 - **Open Food Facts API:** Búsqueda de productos por código de barras
 - **Carbon Footprint:** Estimación de huella de carbono
 - **Google Maps API:** Geocodificación y búsqueda de tiendas cercanas
 
 ### 6. Algoritmos Adicionales 🎯
+
 - **Sistema de Scoring Multi-dimensional:** Implementado completamente
 - **Algoritmo de Sustitución Inteligente:** Con análisis de trade-offs
 - **Ranking de Productos:** Por sostenibilidad y valor
@@ -702,16 +742,19 @@ pytest tests/ --cov=app --cov-report=html
 Para validar la aplicación manualmente:
 
 1. **Backend Health Check:**
+
 ```bash
 curl http://localhost:8000/health
 ```
 
 2. **Obtener productos:**
+
 ```bash
 curl http://localhost:8000/api/products/
 ```
 
 3. **Optimizar lista de compras:**
+
 ```bash
 curl -X POST http://localhost:8000/api/shopping-list/optimize \
   -H "Content-Type: application/json" \
@@ -755,12 +798,14 @@ ssh user@server "cd /app && docker-compose up -d"
 ### Variables de Entorno
 
 **Backend (.env):**
+
 ```env
 ENVIRONMENT=production
 API_URL=https://api.liquiverde.com
 ```
 
 **Frontend (.env):**
+
 ```env
 VITE_API_URL=https://api.liquiverde.com
 ```
@@ -831,10 +876,12 @@ Además de cumplir con todos los requisitos obligatorios y bonus del desafío, s
 ### Experiencia de Usuario
 
 1. **Comparación Inline de Alternativas**
+
    - El optimizador muestra alternativas directamente en los resultados
    - Cada producto incluye comparación visual de opciones más económicas o sostenibles
 
 2. **Mapa Interactivo Avanzado**
+
    - Filtros por tipo de tienda (orgánicos, locales)
    - Estado en tiempo real (abierto/cerrado)
    - Integración directa con Google Maps para direcciones
@@ -846,11 +893,13 @@ Además de cumplir con todos los requisitos obligatorios y bonus del desafío, s
 ### APIs y Backend
 
 4. **Endpoints Extendidos de Recomendaciones**
+
    - `/savings-opportunities`: Identifica productos con mayor potencial de ahorro
    - `/best-value`: Encuentra mejores relaciones precio-valor
    - `/top-sustainable`: Rankings de sostenibilidad por categoría
 
 5. **Quick Optimize**
+
    - Optimización simplificada con solo nombres de productos (sin IDs)
    - Facilita la integración con otros sistemas
 
@@ -861,10 +910,12 @@ Además de cumplir con todos los requisitos obligatorios y bonus del desafío, s
 ### Experiencia de Desarrollador
 
 7. **Scripts de Automatización**
+
    - Helper scripts para todas las plataformas (`start.sh`, `stop.sh`, scripts Windows, Makefile)
    - Comandos unificados para operaciones comunes
 
 8. **Documentación Extendida**
+
    - `DEPLOYMENT.md` con guía completa de producción
    - Documentación algorítmica detallada con complejidad y ejemplos
    - Guía de desarrollo local con troubleshooting
@@ -887,21 +938,25 @@ Este proyecto fue desarrollado con asistencia de **Claude (Anthropic)** como her
 ### Áreas de Asistencia
 
 1. **Arquitectura y Diseño**
+
    - Diseño de la estructura del proyecto
    - Selección de patrones de diseño apropiados
    - Decisiones de arquitectura (FastAPI vs Django, etc.)
 
 2. **Implementación de Algoritmos**
+
    - Desarrollo del optimizador knapsack multi-objetivo
    - Sistema de scoring de sostenibilidad
    - Motor de sustituciones inteligentes
 
 3. **Frontend y UX**
+
    - Componentes React con hooks
    - Diseño responsive y accesible
    - Manejo de estado y efectos
 
 4. **DevOps y Configuración**
+
    - Configuración de Docker y docker-compose
    - Setup de testing con pytest
    - Configuración de PWA
@@ -930,5 +985,3 @@ Todo el código fue revisado, validado y es responsabilidad del autor humano. La
 - Email: juanpablorosasmartin@gmail.com
 
 ---
-
-**⚡️ ¡Hecho con pasión por la sostenibilidad y la tecnología!**
